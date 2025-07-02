@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Your Enrollment | The Up And Up Chess Club</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1A6E70;
+            --primary-light: #399996;
+            --primary-lighter: #8ACBC9;
+            --secondary: #274c7d;
+            --accent: #d6b792;
+            --background: #f5f0e1;
+            --text: #1f2937;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .logo-icon {
+            background-color: #8b5cf6;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            color: var(--text);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .back-link {
+            margin-left: auto;
+            color: var(--secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .back-link i {
+            margin-right: 5px;
+        }
+        
+        .review-header {
+            text-align: center;
+            padding: 30px 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .review-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        
+        .review-header h1 span {
+            color: var(--primary);
+        }
+        
+        .review-header p {
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .search-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: end;
+        }
+        
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 110, 112, 0.1);
+        }
+        
+        .search-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+        
+        .search-btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .search-btn i {
+            margin-right: 8px;
+        }
+        
+        .results-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            display: none;
+        }
+        
+        .enrollment-details {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .detail-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .section-title {
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            background-color: var(--primary-lighter);
+            color: var(--primary);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+        
+        .detail-value {
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-contacted {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-enrolled {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .info-box {
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h3 {
+            color: #0c4a6e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-box h3 i {
+            margin-right: 10px;
+        }
+        
+        .info-box p {
+            color: #075985;
+            margin-bottom: 15px;
+        }
+        
+        .info-box ul {
+            color: #075985;
+            margin-left: 20px;
+        }
+        
+        .contact-info {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .contact-info h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .contact-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .contact-item i {
+            color: var(--primary);
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                flex: none;
+                width: 100%;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-chess-knight"></i>
+            </div>
+            <span class="logo-text">The Up And Up Chess Club</span>
+        </a>
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </header>
+    
+    <div class="container">
+        <div class="review-header">
+            <h1>Review Your <span>Enrollment</span></h1>
+            <p>Enter your details below to view your enrollment submission and current status.</p>
+        </div>
+        
+        <div class="info-box">
+            <h3><i class="fas fa-info-circle"></i> How to Find Your Enrollment</h3>
+            <p>To review your submission, please provide the information you used when enrolling:</p>
+            <ul>
+                <li><strong>Private Enrollments:</strong> Enter the student's name and parent email</li>
+                <li><strong>Group Partnerships:</strong> Enter the organization name and contact email</li>
+                <li>All searches are case-insensitive and will find partial matches</li>
+            </ul>
+        </div>
+        
+        <div class="search-container">
+            <form id="search-form" class="search-form">
+                <div class="form-group">
+                    <label for="enrollment_type">Enrollment Type</label>
+                    <select id="enrollment_type" name="enrollment_type" required>
+                        <option value="" disabled selected>Select Type</option>
+                        <option value="private">Private Chess Instruction</option>
+                        <option value="group">Group/Organization Partnership</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="search_field_1_group">
+                    <label for="search_field_1" id="search_field_1_label">Student Name / Organization Name</label>
+                    <input type="text" id="search_field_1" name="search_field_1" required>
+                </div>
+                
+                <div class="form-group" id="search_field_2_group">
+                    <label for="search_field_2" id="search_field_2_label">Parent Email / Contact Email</label>
+                    <input type="email" id="search_field_2" name="search_field_2" required>
+                </div>
+                
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search"></i> Find Enrollment
+                </button>
+            </form>
+        </div>
+        
+        <div id="results-container" class="results-container">
+            <!-- Results will be populated here -->
+        </div>
+        
+        <div class="contact-info">
+            <h3>Need Help?</h3>
+            <div class="contact-details">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>theuauchessclub@gmail.com</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>(240) 360-0809</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Response within 24 hours</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Supabase Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Supabase client
+            const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            const enrollmentTypeSelect = document.getElementById('enrollment_type');
+            const searchField1 = document.getElementById('search_field_1');
+            const searchField2 = document.getElementById('search_field_2');
+            const searchField1Label = document.getElementById('search_field_1_label');
+            const searchField2Label = document.getElementById('search_field_2_label');
+            const searchForm = document.getElementById('search-form');
+            const resultsContainer = document.getElementById('results-container');
+            
+            // Update labels based on enrollment type
+            enrollmentTypeSelect.addEventListener('change', function() {
+                if (this.value === 'private') {
+                    searchField1Label.textContent = 'Student First Name';
+                    searchField2Label.textContent = 'Parent Email Address';
+                    searchField1.placeholder = 'Enter student\'s first name';
+                    searchField2.placeholder = 'Enter parent\'s email address';
+                } else if (this.value === 'group') {
+                    searchField1Label.textContent = 'Organization Name';
+                    searchField2Label.textContent = 'Contact Email Address';
+                    searchField1.placeholder = 'Enter organization name';
+                    searchField2.placeholder = 'Enter contact email address';
+                }
+                
+                // Clear previous values
+                searchField1.value = '';
+                searchField2.value = '';
+            });
+            
+            // Handle form submission
+            searchForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const enrollmentType = enrollmentTypeSelect.value;
+                const searchValue1 = searchField1.value.trim();
+                const searchValue2 = searchField2.value.trim();
+                
+                // Show loading state
+                const submitBtn = document.querySelector('.search-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+                submitBtn.disabled = true;
+                
+                try {
+                    let data, error;
+                    
+                    if (enrollmentType === 'private') {
+                        // Search private enrollments
+                        const { data: privateData, error: privateError } = await supabase
+                            .from('private_enrollments')
+                            .select('*')
+                            .ilike('student_first_name', `%${searchValue1}%`)
+                            .ilike('parent_email', `%${searchValue2}%`);
+                        
+                        data = privateData;
+                        error = privateError;
+                    } else {
+                        // Search group enrollments
+                        const { data: groupData, error: groupError } = await supabase
+                            .from('group_enrollments')
+                            .select('*')
+                            .ilike('organization_name', `%${searchValue1}%`)
+                            .ilike('contact_email', `%${searchValue2}%`);
+                        
+                        data = groupData;
+                        error = groupError;
+                    }
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    displayResults(data, enrollmentType);
+                    
+                } catch (error) {
+                    console.error('Search error:', error);
+                    showError('Error searching for enrollment. Please try again or contact us directly.');
+                } finally {
+                    // Reset button
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            function displayResults(data, type) {
+                resultsContainer.style.display = 'block';
+                
+                if (data.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No enrollments found matching your search criteria. Please check your information and try again, or contact us at theuauchessclub@gmail.com.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                resultsContainer.innerHTML = `
+                    <h2 style="margin-bottom: 20px; color: var(--primary);">
+                        <i class="fas fa-check-circle"></i> 
+                        Found ${data.length} enrollment${data.length > 1 ? 's' : ''}
+                    </h2>
+                    ${data.map(enrollment => renderEnrollmentDetails(enrollment, type)).join('')}
+                `;
+            }
+            
+            function renderEnrollmentDetails(enrollment, type) {
+                if (type === 'private') {
+                    return renderPrivateEnrollment(enrollment);
+                } else {
+                    return renderGroupEnrollment(enrollment);
+                }
+            }
+            
+            function renderPrivateEnrollment(enrollment) {
+                const statusClass = `status-${enrollment.status || 'pending'}`;
+                const statusText = (enrollment.status || 'pending').charAt(0).toUpperCase() + (enrollment.status || 'pending').slice(1);
+                
+                return `
+                    <div class="enrollment-details">
+                        <div class="detail-section">
+                            <div class="section-title">
+                                <i class="fas fa-user-graduate"></i>
+                                Student Information
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Student Name</div>
+                                    <div class="detail-value">${enrollment.student_first_name} ${enrollment.student_last_name}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Age</div>
+                                    <div class="detail-value">${enrollment.student_age} years old</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Grade</div>
+                                    <div class="detail-value">${enrollment.student_grade}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">School</div>
+                                    <div class="detail-value">${enrollment.student_school}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Chess Experience</div>
+                                    <div class="detail-value">${enrollment.chess_experience}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value"><span class="status-badge ${statusClass}">${statusText}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="section-title">
+                                <i class="fas fa-user-friends"></i>
+                                Parent/Guardian Information
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Parent Name</div>
+                                    <div class="detail-value">${enrollment.parent_first_name} ${enrollment.parent_last_name}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Email</div>
+                                    <div class="detail-value">${enrollment.parent_email}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Phone</div>
+                                    <div class="detail-value">${enrollment.parent_phone}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Address</div>
+                                    <div class="detail-value">${enrollment.address}, ${enrollment.city} ${enrollment.zip}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="section-title">
+                                <i class="fas fa-chess"></i>
+                                Program Details
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Program Level</div>
+                                    <div class="detail-value">${enrollment.program_level}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Session Format</div>
+                                    <div class="detail-value">${enrollment.session_format}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Preferred Schedule</div>
+                                    <div class="detail-value">${enrollment.preferred_schedule}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Submitted</div>
+                                    <div class="detail-value">${new Date(enrollment.created_at).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function renderGroupEnrollment(enrollment) {
+                const statusClass = `status-${enrollment.status || 'pending'}`;
+                const statusText = (enrollment.status || 'pending').charAt(0).toUpperCase() + (enrollment.status || 'pending').slice(1);
+                
+                return `
+                    <div class="enrollment-details">
+                        <div class="detail-section">
+                            <div class="section-title">
+                                <i class="fas fa-building"></i>
+                                Organization Information
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Organization</div>
+                                    <div class="detail-value">${enrollment.organization_name}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Type</div>
+                                    <div class="detail-value">${enrollment.organization_type}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Grade Levels</div>
+                                    <div class="detail-value">${enrollment.grade_levels}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value"><span class="status-badge ${statusClass}">${statusText}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="section-title">
+                                <i class="fas fa-user-tie"></i>
+                                Contact Information
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Contact Person</div>
+                                    <div class="detail-value">${enrollment.contact_first_name} ${enrollment.contact_last_name}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Title</div>
+                                    <div class="detail-value">${enrollment.contact_title}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Email</div>
+                                    <div class="detail-value">${enrollment.contact_email}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Phone</div>
+                                    <div class="detail-value">${enrollment.contact_phone}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="section-title">
+                                <i class="fas fa-chess-board"></i>
+                                Program Requirements
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Program Level</div>
+                                    <div class="detail-value">${enrollment.group_program_level}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Expected Participants</div>
+                                    <div class="detail-value">${enrollment.expected_participants}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Participant Ages</div>
+                                    <div class="detail-value">${enrollment.participant_ages}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Preferred Schedule</div>
+                                    <div class="detail-value">${enrollment.preferred_schedule_group}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Program Duration</div>
+                                    <div class="detail-value">${enrollment.program_duration}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Submitted</div>
+                                    <div class="detail-value">${new Date(enrollment.created_at).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function showError(message) {
+                resultsContainer.style.display = 'block';
+                resultsContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        ${message}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
