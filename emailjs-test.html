@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Club - EmailJS Setup & Test</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        :root {
+            --primary: #1A6E70;
+            --primary-light: #399996;
+            --primary-lighter: #8ACBC9;
+            --secondary: #274c7d;
+            --accent: #d6b792;
+            --background: #f5f0e1;
+            --text: #1f2937;
+            --success: #10b981;
+            --warning: #f97316;
+            --error: #ef4444;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: var(--background);
+            color: var(--text);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: var(--primary);
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: var(--secondary);
+            font-size: 1.4rem;
+            margin-top: 30px;
+        }
+        .info-box {
+            background: #e0f2f2;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        .error-box {
+            background: #fee2e2;
+            border-left: 4px solid var(--error);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            color: #991b1b;
+        }
+        .success-box {
+            background: #d1fae5;
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+            color: #065f46;
+        }
+        .warning-box {
+            background: #fff7ed;
+            border-left: 4px solid var(--warning);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(57, 153, 150, 0.4);
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+        textarea {
+            min-height: 100px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .steps {
+            margin: 25px 0;
+            counter-reset: step;
+        }
+        .step {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            position: relative;
+            counter-increment: step;
+            border-left: 4px solid #d1d5db;
+        }
+        .step.active {
+            background: #e0f2f2;
+            border-left-color: var(--primary);
+        }
+        .step.completed {
+            background: #f0fdf4;
+            border-left-color: var(--success);
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .step-number {
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        .step.completed .step-number {
+            background: var(--success);
+        }
+        .step-content {
+            margin-left: 40px;
+        }
+        .template-example {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+        img.guide-image {
+            max-width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .screenshot {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .screenshot-caption {
+            background: #f9fafb;
+            padding: 10px;
+            text-align: center;
+            border-top: 1px solid #d1d5db;
+            font-size: 14px;
+        }
+        .preview-container {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .preview-header {
+            padding-bottom: 10px;
+            border-bottom: 1px solid #d1d5db;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 6px;
+        }
+        .tag.recommended {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-col {
+            flex: 1;
+        }
+        .code-block {
+            background: #1f2937;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .implementation-snippet {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Chess Club Email Integration</h1>
+        
+        <div class="info-box">
+            <p>This tool helps you set up reliable email confirmations for your chess club enrollment forms using EmailJS - a much more reliable service than FormSubmit.co.</p>
+            <p><strong>Your email:</strong> hall.truth@gmail.com</p>
+        </div>
+        
+        <div class="tab-bar">
+            <div class="tab active" onclick="openTab('setup')">1. Setup Guide</div>
+            <div class="tab" onclick="openTab('preview')">2. Email Preview</div>
+            <div class="tab" onclick="openTab('test')">3. Test Email</div>
+            <div class="tab" onclick="openTab('implement')">4. Implementation</div>
+        </div>
+        
+        <!-- SETUP TAB -->
+        <div id="setup" class="tab-content active">
+            <h2>EmailJS Setup Guide</h2>
+            <p>EmailJS lets you send emails directly from your website without any server setup. Here's how to get started:</p>
+            
+            <div class="steps">
+                <div class="step active" id="step1">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div>Create a free EmailJS account</div>
+                    </div>
+                    <div class="step-content">
+                        <p>Sign up for a free EmailJS account at <a href="https://www.emailjs.com/signup/" target="_blank">emailjs.com/signup</a></p>
+                        <p>The free plan allows 200 emails per month, which should be sufficient for your enrollment forms.</p>
+                    </div>
+                </div>
+                
+                <div class="step" id="step2">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div>Connect your email service</div>
+                    </div>
+                    <div class="step-content">
+                        <p>After logging in:</p>
+                        <ol>
+                            <li>Click "Add New Service" in your EmailJS dashboard</li>
+                            <li>Choose your email provider (Gmail, Outlook, Yahoo, etc.)</li>
+                            <li>Follow the authentication steps</li>
+                            <li>Give your service a name like "Chess Club Emails"</li>
+                        </ol>
+                        
+                        <div class="warning-box">
+                            <strong>Note:</strong> If using Gmail, you may need to enable "Less secure app access" or create an App Password if you have 2-factor authentication enabled.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step" id="step3">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <div>Create an email template</div>
+                    </div>
+                    <div class="step-content">
+                        <p>In the EmailJS dashboard:</p>
+                        <ol>
+                            <li>Click "Create Email Template"</li>
+                            <li>Name your template (e.g., "Chess Club Enrollment Confirmation")</li>
+                            <li>Set the subject: <code>{{subject}}</code></li>
+                            <li>Create your email content using these variables:</li>
+                        </ol>
+                        
+                        <div class="template-example">
+                            Hello {{to_name}},<br><br>
+                            
+                            {{message}}<br><br>
+                            
+                            Best regards,<br>
+                            The Up And Up Chess Club<br>
+                            (240) 360-0809
+                        </div>
+                        
+                        <p>These variables will be replaced with actual content when sending emails.</p>
+                    </div>
+                </div>
+                
+                <div class="step" id="step4">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <div>Get your API credentials</div>
+                    </div>
+                    <div class="step-content">
+                        <p>You'll need three pieces of information to connect to EmailJS:</p>
+                        <ol>
+                            <li><strong>Service ID</strong> - Found on the Email Services page</li>
+                            <li><strong>Template ID</strong> - Found on your email template page</li>
+                            <li><strong>Public Key</strong> - Found in Account → API Keys</li>
+                        </ol>
+                        
+                        <p>Enter these credentials below to continue:</p>
+                        
+                        <div class="form-group">
+                            <label for="serviceId">Service ID:</label>
+                            <input type="text" id="serviceId" placeholder="e.g., service_xxxxxxx">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="templateId">Template ID:</label>
+                            <input type="text" id="templateId" placeholder="e.g., template_xxxxxxx">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="publicKey">Public Key:</label>
+                            <input type="text" id="publicKey" placeholder="e.g., XXXXXXXXXXXXXXXX">
+                        </div>
+                        
+                        <button onclick="saveCredentials()">
+                            <span>Save & Continue</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PREVIEW TAB -->
+        <div id="preview" class="tab-content">
+            <h2>Email Preview</h2>
+            <p>Here's a preview of how your confirmation email will look:</p>
+            
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div><strong>Subject:</strong> Chess Club Enrollment Confirmation</div>
+                    <div><strong>From:</strong> The Up And Up Chess Club</div>
+                    <div><strong>To:</strong> <span id="previewRecipient">hall.truth@gmail.com</span></div>
+                </div>
+                
+                <div>Hello Truth Hall,</div>
+                <br>
+                <div>Thank you for your interest in partnering with The Up And Up Chess Club for Test Elementary School!</div>
+                <br>
+                <div><strong>Partnership Details:</strong></div>
+                <ul>
+                    <li><strong>Organization:</strong> Test Elementary School</li>
+                    <li><strong>Contact:</strong> Truth Hall (Principal)</li>
+                    <li><strong>Program:</strong> School Enrichment Program</li>
+                    <li><strong>Participants:</strong> 30 students (ages 6-11)</li>
+                    <li><strong>Schedule:</strong> After School Program</li>
+                    <li><strong>Duration:</strong> 10 weeks</li>
+                </ul>
+                <br>
+                <div>We will contact you shortly to discuss your specific needs and schedule a consultation call to create the perfect chess program for your school.</div>
+                <br>
+                <div>If you have any immediate questions, please contact us at:</div>
+                <ul>
+                    <li><strong>Email:</strong> theuauchessclub@gmail.com</li>
+                    <li><strong>Phone:</strong> (240) 360-0809</li>
+                </ul>
+                <br>
+                <div>Best regards,</div>
+                <div>The Up And Up Chess Club</div>
+                <div>(240) 360-0809</div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <button class="btn-secondary" onclick="openTab('setup')">
+                        <span>← Back to Setup</span>
+                    </button>
+                </div>
+                <div class="form-col" style="text-align: right;">
+                    <button onclick="openTab('test')">
+                        <span>Continue to Testing →</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TEST TAB -->
+        <div id="test" class="tab-content">
+            <h2>Test Your Email Delivery</h2>
+            <p>Let's send a test email to make sure everything is working correctly.</p>
+            
+            <div id="credentials-needed" class="warning-box" style="display: none;">
+                <p><strong>⚠️ EmailJS credentials not found!</strong></p>
+                <p>Please go back to the Setup tab and enter your EmailJS credentials before testing.</p>
+                <button onclick="openTab('setup')">
+                    <span>Go to Setup</span>
+                </button>
+            </div>
+            
+            <div id="test-form">
+                <div class="form-group">
+                    <label for="recipientEmail">Recipient Email:</label>
+                    <input type="email" id="recipientEmail" value="hall.truth@gmail.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientName">Recipient Name:</label>
+                    <input type="text" id="recipientName" value="Truth Hall">
+                </div>
+                
+                <div class="form-group">
+                    <label for="emailSubject">Email Subject:</label>
+                    <input type="text" id="emailSubject" value="Chess Club Enrollment Confirmation">
+                </div>
+                
+                <div class="form-group">
+                    <label for="emailContent">Email Content:</label>
+                    <textarea id="emailContent" rows="10">Thank you for your interest in partnering with The Up And Up Chess Club for Test Elementary School!
+
+Partnership Details:
+- Organization: Test Elementary School
+- Contact: Truth Hall (Principal)
+- Program: School Enrichment Program
+- Participants: 30 students (ages 6-11)
+- Schedule: After School Program
+- Duration: 10 weeks
+
+We will contact you shortly to discuss your specific needs and schedule a consultation call to create the perfect chess program for your school.
+
+If you have any immediate questions, please contact us at:
+- Email: theuauchessclub@gmail.com
+- Phone: (240) 360-0809</textarea>
+                </div>
+                
+                <button id="sendButton" onclick="sendTestEmail()">
+                    <span id="buttonText">Send Test Email</span>
+                    <span id="spinner" style="display: none;" class="spinner"></span>
+                </button>
+            </div>
+            
+            <div id="result" class="result"></div>
+            
+            <div class="nav-buttons">
+                <button class="btn-secondary" onclick="openTab('preview')">
+                    <span>← Back to Preview</span>
+                </button>
+                <button id="continue-button" onclick="openTab('implement')" style="display: none;">
+                    <span>Continue to Implementation →</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- IMPLEMENT TAB -->
+        <div id="implement" class="tab-content">
+            <h2>Implementation Guide</h2>
+            <p>Now that you've set up EmailJS, here's how to integrate it into your enrollment forms.</p>
+            
+            <h3>1. Add EmailJS to your forms</h3>
+            <p>Include this script in the <code>&lt;head&gt;</code> section of your pages with forms:</p>
+            
+            <div class="implementation-snippet">
+&lt;script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"&gt;&lt;/script&gt;
+            </div>
+            
+            <h3>2. Initialize EmailJS</h3>
+            <p>Add this code to initialize EmailJS with your public key:</p>
+            
+            <div class="implementation-snippet">
+&lt;script&gt;
+  // Initialize EmailJS
+  (function() {
+    emailjs.init("YOUR_PUBLIC_KEY");
+  })();
+&lt;/script&gt;
+            </div>
+            
+            <h3>3. Update your form submission code</h3>
+            <p>Replace your current form submission with this code:</p>
+            
+            <div class="implementation-snippet">
+// Handle form submission
+document.getElementById("enrollment-form").addEventListener("submit", function(event) {
+  event.preventDefault();
+  
+  // Get form data
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  // Get other form fields as needed...
+  
+  // Prepare email content
+  const message = `
+    Thank you for enrolling with The Up And Up Chess Club!
+    
+    Your enrollment details:
+    - Name: ${name}
+    - Email: ${email}
+    - Program: ${program}
+    - Schedule: ${schedule}
+    
+    We look forward to seeing you at our chess sessions!
+  `;
+  
+  // Send confirmation email via EmailJS
+  emailjs.send(
+    "YOUR_SERVICE_ID",
+    "YOUR_TEMPLATE_ID",
+    {
+      to_name: name,
+      to_email: email,
+      subject: "Chess Club Enrollment Confirmation",
+      message: message
+    }
+  ).then(
+    function(response) {
+      console.log("Email sent successfully!", response);
+      // Show success message to user
+      showSuccessMessage();
+    },
+    function(error) {
+      console.log("Failed to send email:", error);
+      // Show error message but still complete the form submission
+      showErrorMessage();
+    }
+  );
+  
+  // Continue with form submission to database
+  // Your existing form submission code here...
+});
+            </div>
+            
+            <h3>4. Form-specific implementations</h3>
+            
+            <div class="form-group">
+                <h4>Private Enrollment Form</h4>
+                <button onclick="showFormImplementation('private')" class="btn-secondary">
+                    <span>Show Private Form Implementation</span>
+                </button>
+                <div id="private-implementation" style="display: none;" class="implementation-snippet">
+// Add to enroll-private.html
+
+// Initialize EmailJS
+document.addEventListener("DOMContentLoaded", function() {
+  emailjs.init("YOUR_PUBLIC_KEY");
+});
+
+// Handle form submission
+document.getElementById("enrollmentForm").addEventListener("submit", function(event) {
+  // Don't prevent default - let the form submit to database
+  
+  // Gather form data
+  const studentName = document.getElementById("student_name").value;
+  const parentName = document.getElementById("parent_name").value;
+  const parentEmail = document.getElementById("parent_email").value;
+  const program = document.getElementById("program_level").value;
+  
+  // Create email message
+  const message = `
+    Thank you for enrolling ${studentName} in The Up And Up Chess Club!
+    
+    Enrollment Details:
+    - Student: ${studentName}
+    - Program: ${program}
+    
+    We will contact you shortly with next steps and your lesson schedule.
+    
+    If you have any questions, please contact us at:
+    - Email: theuauchessclub@gmail.com
+    - Phone: (240) 360-0809
+  `;
+  
+  // Send confirmation email via EmailJS
+  emailjs.send(
+    "YOUR_SERVICE_ID",
+    "YOUR_TEMPLATE_ID",
+    {
+      to_name: parentName,
+      to_email: parentEmail,
+      subject: "Chess Club Enrollment Confirmation",
+      message: message
+    }
+  );
+  
+  // No need to prevent the form from submitting - continue with the process
+});
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <h4>Group Partnership Form</h4>
+                <button onclick="showFormImplementation('group')" class="btn-secondary">
+                    <span>Show Group Form Implementation</span>
+                </button>
+                <div id="group-implementation" style="display: none;" class="implementation-snippet">
+// Add to enroll-group.html
+
+// Initialize EmailJS
+document.addEventListener("DOMContentLoaded", function() {
+  emailjs.init("YOUR_PUBLIC_KEY");
+});
+
+// Handle form submission
+document.getElementById("groupEnrollmentForm").addEventListener("submit", function(event) {
+  // Don't prevent default - let the form submit to database
+  
+  // Gather form data
+  const organizationName = document.getElementById("organization_name").value;
+  const contactName = document.getElementById("contact_first_name").value + " " + 
+                      document.getElementById("contact_last_name").value;
+  const contactTitle = document.getElementById("contact_title").value;
+  const contactEmail = document.getElementById("contact_email").value;
+  const programLevel = document.getElementById("group_program_level").value;
+  const participants = document.getElementById("expected_participants").value;
+  
+  // Create email message
+  const message = `
+    Thank you for your interest in partnering with The Up And Up Chess Club for ${organizationName}!
+    
+    Partnership Details:
+    - Organization: ${organizationName}
+    - Contact: ${contactName} (${contactTitle})
+    - Program: ${programLevel}
+    - Expected Participants: ${participants}
+    
+    We will contact you shortly to discuss your specific needs and schedule a consultation call.
+    
+    If you have any immediate questions, please contact us at:
+    - Email: theuauchessclub@gmail.com
+    - Phone: (240) 360-0809
+  `;
+  
+  // Send confirmation email via EmailJS
+  emailjs.send(
+    "YOUR_SERVICE_ID",
+    "YOUR_TEMPLATE_ID",
+    {
+      to_name: contactName,
+      to_email: contactEmail,
+      subject: "Chess Club Partnership Request Confirmation",
+      message: message
+    }
+  );
+  
+  // No need to prevent the form from submitting - continue with the process
+});
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="btn-secondary" onclick="openTab('test')">
+                    <span>← Back to Testing</span>
+                </button>
+                <button onclick="completeSetup()">
+                    <span>Finish Setup</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab navigation
+        function openTab(tabName) {
+            // Hide all tabs
+            const tabs = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Deactivate all tab buttons
+            const tabButtons = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Activate selected tab button
+            const tabIndex = ['setup', 'preview', 'test', 'implement'].indexOf(tabName);
+            if (tabIndex >= 0) {
+                tabButtons[tabIndex].classList.add('active');
+            }
+            
+            // Special handling for test tab
+            if (tabName === 'test') {
+                checkCredentials();
+            }
+        }
+        
+        // Save credentials
+        function saveCredentials() {
+            const serviceId = document.getElementById('serviceId').value.trim();
+            const templateId = document.getElementById('templateId').value.trim();
+            const publicKey = document.getElementById('publicKey').value.trim();
+            
+            if (!serviceId || !templateId || !publicKey) {
+                alert('Please fill in all EmailJS credentials');
+                return;
+            }
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('emailjs_service_id', serviceId);
+            localStorage.setItem('emailjs_template_id', templateId);
+            localStorage.setItem('emailjs_public_key', publicKey);
+            
+            // Initialize EmailJS
+            emailjs.init(publicKey);
+            
+            // Update UI
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step2').classList.add('completed');
+            document.getElementById('step3').classList.remove('active');
+            document.getElementById('step3').classList.add('completed');
+            document.getElementById('step4').classList.remove('active');
+            document.getElementById('step4').classList.add('completed');
+            
+            // Navigate to preview tab
+            openTab('preview');
+        }
+        
+        // Check if credentials are available
+        function checkCredentials() {
+            const serviceId = localStorage.getItem('emailjs_service_id');
+            const templateId = localStorage.getItem('emailjs_template_id');
+            const publicKey = localStorage.getItem('emailjs_public_key');
+            
+            if (!serviceId || !templateId || !publicKey) {
+                document.getElementById('credentials-needed').style.display = 'block';
+                document.getElementById('test-form').style.display = 'none';
+            } else {
+                document.getElementById('credentials-needed').style.display = 'none';
+                document.getElementById('test-form').style.display = 'block';
+            }
+        }
+        
+        // Send test email
+        async function sendTestEmail() {
+            const button = document.getElementById('sendButton');
+            const buttonText = document.getElementById('buttonText');
+            const spinner = document.getElementById('spinner');
+            const result = document.getElementById('result');
+            const continueButton = document.getElementById('continue-button');
+            
+            // Get credentials
+            const serviceId = localStorage.getItem('emailjs_service_id');
+            const templateId = localStorage.getItem('emailjs_template_id');
+            
+            // Get email details
+            const recipientName = document.getElementById('recipientName').value.trim();
+            const recipientEmail = document.getElementById('recipientEmail').value.trim();
+            const emailSubject = document.getElementById('emailSubject').value.trim();
+            const emailContent = document.getElementById('emailContent').value.trim();
+            
+            if (!recipientName || !recipientEmail || !emailSubject || !emailContent) {
+                alert('Please fill in all email details');
+                return;
+            }
+            
+            // Update UI
+            button.disabled = true;
+            buttonText.textContent = 'Sending...';
+            spinner.style.display = 'inline-block';
+            result.style.display = 'none';
+            
+            try {
+                // Prepare template parameters
+                const templateParams = {
+                    to_name: recipientName,
+                    to_email: recipientEmail,
+                    subject: emailSubject,
+                    message: emailContent,
+                    // Standard EmailJS parameters
+                    email: recipientEmail,
+                    name: recipientName
+                };
+                
+                // Send the email
+                const response = await emailjs.send(serviceId, templateId, templateParams);
+                
+                if (response.status === 200) {
+                    result.className = 'result success-box';
+                    result.innerHTML = `
+                        <h3>✅ Success!</h3>
+                        <p>Test email sent successfully!</p>
+                        <p><strong>Sent to:</strong> ${recipientEmail}</p>
+                        <p><strong>Subject:</strong> ${emailSubject}</p>
+                        <p>Check your email inbox (and spam folder) in the next few minutes.</p>
+                        <p style="margin-top: 15px;"><strong>Next Steps:</strong> Now that you've confirmed EmailJS is working, let's implement it in your enrollment forms.</p>
+                    `;
+                    continueButton.style.display = 'inline-flex';
+                } else {
+                    throw new Error('Unexpected response status: ' + response.status);
+                }
+            } catch (error) {
+                console.error('EmailJS Error:', error);
+                result.className = 'result error-box';
+                result.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>Failed to send test email: ${error.message || 'Unknown error'}</p>
+                    <p>Please check that your EmailJS credentials are correct and your account is active.</p>
+                    <p>Common issues:</p>
+                    <ul>
+                        <li>Incorrect Service ID, Template ID, or Public Key</li>
+                        <li>Template doesn't have the required variables</li>
+                        <li>Email service authorization issues</li>
+                        <li>Free plan limitations (200 emails/month)</li>
+                    </ul>
+                    <p>Check the <a href="https://www.emailjs.com/docs/sdk/installation/" target="_blank">EmailJS documentation</a> for more help.</p>
+                `;
+            } finally {
+                button.disabled = false;
+                buttonText.textContent = 'Send Test Email';
+                spinner.style.display = 'none';
+                result.style.display = 'block';
+            }
+        }
+        
+        // Show form implementation code
+        function showFormImplementation(formType) {
+            const privateImpl = document.getElementById('private-implementation');
+            const groupImpl = document.getElementById('group-implementation');
+            
+            if (formType === 'private') {
+                privateImpl.style.display = privateImpl.style.display === 'none' ? 'block' : 'none';
+            } else if (formType === 'group') {
+                groupImpl.style.display = groupImpl.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        // Complete setup
+        function completeSetup() {
+            alert('EmailJS setup complete! You can now implement the code in your enrollment forms to send reliable confirmation emails.');
+            window.location.href = 'test-email.html';
+        }
+        
+        // Check for saved credentials on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const serviceId = localStorage.getItem('emailjs_service_id');
+            const templateId = localStorage.getItem('emailjs_template_id');
+            const publicKey = localStorage.getItem('emailjs_public_key');
+            
+            if (serviceId && templateId && publicKey) {
+                // Pre-fill the form
+                document.getElementById('serviceId').value = serviceId;
+                document.getElementById('templateId').value = templateId;
+                document.getElementById('publicKey').value = publicKey;
+                
+                // Mark steps as completed
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step1').classList.add('completed');
+                document.getElementById('step2').classList.remove('active');
+                document.getElementById('step2').classList.add('completed');
+                document.getElementById('step3').classList.remove('active');
+                document.getElementById('step3').classList.add('completed');
+                document.getElementById('step4').classList.add('active');
+                
+                // Initialize EmailJS
+                emailjs.init(publicKey);
+            }
+        });
+    </script>
+</body>
+</html>

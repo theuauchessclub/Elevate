@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - The Up And Up Chess Club</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Password Protection Overlay -->
+    <div id="password-overlay" class="fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full mx-4">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                </div>
+                <h2 class="font-display text-3xl font-bold text-gray-900 mb-2">Admin Access</h2>
+                <p class="text-gray-600">Enter the admin password to continue</p>
+            </div>
+            
+            <form id="password-form" class="space-y-6">
+                <div>
+                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="admin-password" 
+                            name="password"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Enter admin password"
+                            required
+                        >
+                        <i class="fas fa-lock absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <button 
+                    type="submit" 
+                    class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Access Dashboard
+                </button>
+            </form>
+            
+            <div id="error-message" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Incorrect password. Please try again.
+            </div>
+            
+            <div class="mt-6 text-center">
+                <a href="index.html" class="text-gray-500 hover:text-gray-700 text-sm transition-colors">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Back to Website
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (Hidden by default) -->
+    <div id="main-dashboard" class="hidden">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chess-king text-white text-lg"></i>
+                    </div>
+                    <span class="font-display font-bold text-xl text-gray-900">Chess Club Admin</span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-600 hover:text-indigo-600 transition duration-300">
+                        <i class="fas fa-home mr-2"></i>Back to Website
+                    </a>
+                    <button id="refresh-data" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <section class="py-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">Enrollment Management Dashboard</h1>
+            <p class="text-xl opacity-90">View and manage all enrollment submissions for The Up And Up Chess Club</p>
+        </div>
+    </section>
+
+    <!-- Stats Overview -->
+    <section class="py-8">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-user-graduate text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-600">Total Private Enrollments</h3>
+                            <p id="private-count" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-school text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-600">Group Partnerships</h3>
+                            <p id="group-count" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-600">Pending Applications</h3>
+                            <p id="pending-count" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar text-purple-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-600">This Week</h3>
+                            <p id="week-count" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tabs Navigation -->
+    <section class="py-4 bg-white border-b">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex space-x-1">
+                <button class="tab-btn active px-6 py-3 font-medium rounded-lg transition duration-300" data-tab="private">
+                    <i class="fas fa-user mr-2"></i>Private Enrollments
+                </button>
+                <button class="tab-btn px-6 py-3 font-medium rounded-lg transition duration-300" data-tab="group">
+                    <i class="fas fa-users mr-2"></i>Group Partnerships
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Area -->
+    <section class="py-8">
+        <div class="container mx-auto px-4 md:px-6">
+            <!-- Private Enrollments Tab -->
+            <div id="private-tab" class="tab-content active">
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-900">Private Instruction Enrollments</h2>
+                        <p class="text-gray-600 mt-1">Individual chess lesson applications</p>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="private-enrollments" class="bg-white divide-y divide-gray-200">
+                                <!-- Private enrollments will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Enrollments Tab -->
+            <div id="group-tab" class="tab-content">
+                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-900">Group Program Partnerships</h2>
+                        <p class="text-gray-600 mt-1">School and community organization requests</p>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="group-enrollments" class="bg-white divide-y divide-gray-200">
+                                <!-- Group enrollments will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enrollment Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto mx-4 w-full">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex justify-between items-center">
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-900"></h3>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="modal-content" class="p-6">
+                <!-- Modal content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-indigo-100', 'text-indigo-700');
+                    b.classList.add('text-gray-600', 'hover:text-gray-900');
+                });
+                this.classList.add('active', 'bg-indigo-100', 'text-indigo-700');
+                this.classList.remove('text-gray-600', 'hover:text-gray-900');
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName + '-tab').classList.add('active');
+            });
+        });
+
+        // Load and display data
+        async function loadDashboardData() {
+            try {
+                // Load private enrollments
+                const { data: privateData, error: privateError } = await supabase
+                    .from('private_enrollments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (privateError) throw privateError;
+
+                // Load group enrollments
+                const { data: groupData, error: groupError } = await supabase
+                    .from('group_enrollments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (groupError) throw groupError;
+
+                // Update stats
+                updateStats(privateData, groupData);
+                
+                // Populate tables
+                populatePrivateTable(privateData);
+                populateGroupTable(groupData);
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                alert('Error loading enrollment data. Please check your connection and try again.');
+            }
+        }
+
+        function updateStats(privateData, groupData) {
+            document.getElementById('private-count').textContent = privateData.length;
+            document.getElementById('group-count').textContent = groupData.length;
+            
+            // Count pending applications
+            const pendingPrivate = privateData.filter(item => item.status === 'pending').length;
+            const pendingGroup = groupData.filter(item => item.status === 'pending').length;
+            document.getElementById('pending-count').textContent = pendingPrivate + pendingGroup;
+            
+            // Count this week's applications
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const weekPrivate = privateData.filter(item => new Date(item.created_at) > oneWeekAgo).length;
+            const weekGroup = groupData.filter(item => new Date(item.created_at) > oneWeekAgo).length;
+            document.getElementById('week-count').textContent = weekPrivate + weekGroup;
+        }
+
+        function populatePrivateTable(data) {
+            const tbody = document.getElementById('private-enrollments');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No private enrollments yet</td></tr>';
+                return;
+            }
+
+            data.forEach(enrollment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(enrollment.created_at).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${enrollment.student_first_name} ${enrollment.student_last_name}</div>
+                        <div class="text-sm text-gray-500">Age ${enrollment.student_age} • ${enrollment.chess_experience}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${enrollment.parent_first_name} ${enrollment.parent_last_name}</div>
+                        <div class="text-sm text-gray-500">${enrollment.parent_email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${enrollment.program_level.split(' - ')[0]}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(enrollment.status)}">
+                            ${enrollment.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewDetails('private', '${enrollment.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button onclick="updateStatus('private', '${enrollment.id}', '${enrollment.status}')" class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-edit"></i> Update
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateGroupTable(data) {
+            const tbody = document.getElementById('group-enrollments');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No group partnerships yet</td></tr>';
+                return;
+            }
+
+            data.forEach(enrollment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(enrollment.created_at).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${enrollment.organization_name}</div>
+                        <div class="text-sm text-gray-500">${enrollment.organization_type}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${enrollment.contact_first_name} ${enrollment.contact_last_name}</div>
+                        <div class="text-sm text-gray-500">${enrollment.contact_email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${enrollment.group_program_level.split(' - ')[0]}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${enrollment.expected_participants}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(enrollment.status)}">
+                            ${enrollment.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewDetails('group', '${enrollment.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button onclick="updateStatus('group', '${enrollment.id}', '${enrollment.status}')" class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-edit"></i> Update
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'contacted': return 'bg-blue-100 text-blue-800';
+                case 'enrolled': return 'bg-green-100 text-green-800';
+                case 'signed': return 'bg-green-100 text-green-800';
+                case 'declined': return 'bg-red-100 text-red-800';
+                case 'proposal_sent': return 'bg-purple-100 text-purple-800';
+                case 'negotiating': return 'bg-orange-100 text-orange-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        async function viewDetails(type, id) {
+            try {
+                const tableName = type === 'private' ? 'private_enrollments' : 'group_enrollments';
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                const modal = document.getElementById('detail-modal');
+                const title = document.getElementById('modal-title');
+                const content = document.getElementById('modal-content');
+
+                if (type === 'private') {
+                    title.textContent = `Private Enrollment: ${data.student_first_name} ${data.student_last_name}`;
+                    content.innerHTML = generatePrivateDetailsHTML(data);
+                } else {
+                    title.textContent = `Group Partnership: ${data.organization_name}`;
+                    content.innerHTML = generateGroupDetailsHTML(data);
+                }
+
+                modal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading details:', error);
+                alert('Error loading enrollment details.');
+            }
+        }
+
+        function generatePrivateDetailsHTML(data) {
+            return `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-3">Student Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Name:</strong> ${data.student_first_name} ${data.student_last_name}</div>
+                            <div><strong>Age:</strong> ${data.student_age}</div>
+                            <div><strong>Grade:</strong> ${data.student_grade || 'Not provided'}</div>
+                            <div><strong>School:</strong> ${data.student_school || 'Not provided'}</div>
+                            <div><strong>Chess Experience:</strong> ${data.chess_experience}</div>
+                            <div><strong>Interests:</strong> ${data.student_interests || 'Not provided'}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-lg mb-3">Parent/Guardian</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Name:</strong> ${data.parent_first_name} ${data.parent_last_name}</div>
+                            <div><strong>Email:</strong> ${data.parent_email}</div>
+                            <div><strong>Phone:</strong> ${data.parent_phone}</div>
+                            <div><strong>Address:</strong> ${data.address || 'Not provided'}</div>
+                            <div><strong>City:</strong> ${data.city || 'Not provided'}</div>
+                            <div><strong>ZIP:</strong> ${data.zip || 'Not provided'}</div>
+                            <div><strong>Emergency Contact:</strong> ${data.emergency_contact}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <h4 class="font-bold text-lg mb-3">Program Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Program:</strong> ${data.program_level}</div>
+                            <div><strong>Preferred Schedule:</strong> ${data.preferred_schedule}</div>
+                            <div><strong>Learning Goals:</strong> ${data.learning_goals}</div>
+                            <div><strong>Special Considerations:</strong> ${data.special_considerations || 'None'}</div>
+                            <div><strong>How they heard about us:</strong> ${data.how_heard || 'Not provided'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <h4 class="font-bold text-lg mb-3">Submission Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Submitted:</strong> ${new Date(data.created_at).toLocaleString()}</div>
+                            <div><strong>Status:</strong> <span class="px-2 py-1 rounded-full text-xs ${getStatusColor(data.status)}">${data.status}</span></div>
+                            <div><strong>Terms Agreement:</strong> ${data.terms_agreement ? 'Yes' : 'No'}</div>
+                            <div><strong>Photo Consent:</strong> ${data.photo_consent ? 'Yes' : 'No'}</div>
+                            <div><strong>Email Updates:</strong> ${data.email_updates ? 'Yes' : 'No'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateGroupDetailsHTML(data) {
+            return `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-3">Organization</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Name:</strong> ${data.organization_name}</div>
+                            <div><strong>Type:</strong> ${data.organization_type}</div>
+                            <div><strong>Address:</strong> ${data.org_address}</div>
+                            <div><strong>City:</strong> ${data.org_city}, ${data.org_state} ${data.org_zip}</div>
+                            <div><strong>Student Population:</strong> ${data.student_population || 'Not provided'}</div>
+                            <div><strong>Grade Levels:</strong> ${data.grade_levels || 'Not provided'}</div>
+                            <div><strong>Website:</strong> ${data.org_website || 'Not provided'}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-lg mb-3">Contact Person</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Name:</strong> ${data.contact_first_name} ${data.contact_last_name}</div>
+                            <div><strong>Title:</strong> ${data.contact_title}</div>
+                            <div><strong>Department:</strong> ${data.contact_department || 'Not provided'}</div>
+                            <div><strong>Email:</strong> ${data.contact_email}</div>
+                            <div><strong>Phone:</strong> ${data.contact_phone}</div>
+                            <div><strong>Alt Phone:</strong> ${data.contact_phone_alt || 'Not provided'}</div>
+                            <div><strong>Best Contact Time:</strong> ${data.best_contact_time || 'Not specified'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <h4 class="font-bold text-lg mb-3">Program Requirements</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Program:</strong> ${data.group_program_level}</div>
+                            <div><strong>Expected Participants:</strong> ${data.expected_participants}</div>
+                            <div><strong>Participant Ages:</strong> ${data.participant_ages}</div>
+                            <div><strong>Preferred Schedule:</strong> ${data.preferred_schedule_group}</div>
+                            <div><strong>Program Duration:</strong> ${data.program_duration || 'Not specified'}</div>
+                            <div><strong>Additional Services:</strong> ${data.additional_services ? data.additional_services.join(', ') : 'None'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <h4 class="font-bold text-lg mb-3">Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Facility Details:</strong> ${data.facility_details}</div>
+                            <div><strong>Program Goals:</strong> ${data.program_goals}</div>
+                            <div><strong>Budget/Timeline:</strong> ${data.budget_timeline || 'Not provided'}</div>
+                            <div><strong>Decision Makers:</strong> ${data.decision_makers || 'Not provided'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <h4 class="font-bold text-lg mb-3">Submission Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Submitted:</strong> ${new Date(data.created_at).toLocaleString()}</div>
+                            <div><strong>Status:</strong> <span class="px-2 py-1 rounded-full text-xs ${getStatusColor(data.status)}">${data.status}</span></div>
+                            <div><strong>Authority Agreement:</strong> ${data.authority_agreement ? 'Yes' : 'No'}</div>
+                            <div><strong>Information Accuracy:</strong> ${data.information_accuracy ? 'Yes' : 'No'}</div>
+                            <div><strong>Follow-up Consent:</strong> ${data.follow_up_consent ? 'Yes' : 'No'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function updateStatus(type, id, currentStatus) {
+            const statuses = type === 'private' 
+                ? ['pending', 'contacted', 'enrolled', 'declined']
+                : ['pending', 'contacted', 'proposal_sent', 'negotiating', 'signed', 'declined'];
+            
+            const newStatus = prompt(`Current status: ${currentStatus}\nEnter new status (${statuses.join(', ')}):`, currentStatus);
+            
+            if (newStatus && statuses.includes(newStatus)) {
+                try {
+                    const tableName = type === 'private' ? 'private_enrollments' : 'group_enrollments';
+                    const { error } = await supabase
+                        .from(tableName)
+                        .update({ status: newStatus })
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    // Refresh the data
+                    loadDashboardData();
+                } catch (error) {
+                    console.error('Error updating status:', error);
+                    alert('Error updating status.');
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('detail-modal').classList.add('hidden');
+        });
+
+        document.getElementById('refresh-data').addEventListener('click', loadDashboardData);
+
+        // Password Protection System
+        const ADMIN_PASSWORD = 'ChessClub2024!'; // Change this to your desired password
+        
+        document.getElementById('password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const enteredPassword = document.getElementById('admin-password').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            if (enteredPassword === ADMIN_PASSWORD) {
+                // Correct password - show dashboard
+                document.getElementById('password-overlay').style.display = 'none';
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                
+                // Store authentication in session
+                sessionStorage.setItem('adminAuthenticated', 'true');
+                
+                // Initialize dashboard
+                loadDashboardData();
+            } else {
+                // Wrong password - show error
+                errorMessage.classList.remove('hidden');
+                document.getElementById('admin-password').value = '';
+                document.getElementById('admin-password').focus();
+                
+                // Hide error after 3 seconds
+                setTimeout(() => {
+                    errorMessage.classList.add('hidden');
+                }, 3000);
+            }
+        });
+
+        // Check if already authenticated
+        if (sessionStorage.getItem('adminAuthenticated') === 'true') {
+            document.getElementById('password-overlay').style.display = 'none';
+            document.getElementById('main-dashboard').classList.remove('hidden');
+            loadDashboardData();
+        }
+
+        // Focus password field on load
+        document.getElementById('admin-password').focus();
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            sessionStorage.removeItem('adminAuthenticated');
+            document.getElementById('password-overlay').style.display = 'flex';
+            document.getElementById('main-dashboard').classList.add('hidden');
+            document.getElementById('admin-password').value = '';
+            document.getElementById('admin-password').focus();
+        });
+    </script>
+</body>
+</html>

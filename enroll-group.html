@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Chess Programs | The Up And Up Chess Club</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1A6E70;
+            --primary-light: #399996;
+            --primary-lighter: #8ACBC9;
+            --secondary: #274c7d;
+            --accent: #d6b792;
+            --background: #f5f0e1;
+            --text: #1f2937;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .logo-icon {
+            background-color: #8b5cf6;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            color: var(--text);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .back-link {
+            margin-left: auto;
+            color: var(--secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .back-link i {
+            margin-right: 5px;
+        }
+        
+        .enrollment-header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .enrollment-header h1 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+        
+        .enrollment-header h1 span {
+            color: var(--primary);
+        }
+        
+        .enrollment-header p {
+            color: #6b7280;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px auto 40px;
+            max-width: 800px;
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 20px;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .section-header i {
+            background-color: var(--primary-lighter);
+            color: var(--primary);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .section-header h2 {
+            font-size: 1.25rem;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        
+        .form-group {
+            flex: 1 1 calc(50% - 20px);
+            margin: 0 10px 20px;
+            min-width: 200px;
+        }
+        
+        .form-group.full-width {
+            flex: 1 1 calc(100% - 20px);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        
+        label .required {
+            color: #ef4444;
+            margin-left: 3px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 110, 112, 0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .program-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .program-card {
+            flex: 1;
+            min-width: 220px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .program-card:hover {
+            border-color: var(--primary-lighter);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .program-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(26, 110, 112, 0.05);
+        }
+        
+        .program-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+        
+        .program-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+        
+        .program-note {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        
+        .program-details {
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .program-tag {
+            display: inline-block;
+            background-color: #e0f2f1;
+            color: var(--primary);
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .services-container {
+            margin-bottom: 20px;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .service-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .service-item input {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .checkbox-group {
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label input {
+            width: auto;
+            margin-right: 10px;
+            margin-top: 4px;
+        }
+        
+        .submit-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .submit-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .submit-btn i {
+            margin-right: 8px;
+        }
+        
+        .next-steps {
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .next-steps h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+        
+        .next-steps ul {
+            list-style-type: none;
+            margin-left: 10px;
+        }
+        
+        .next-steps li {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .next-steps li::before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 100%;
+            max-width: 400px;
+            transform: translateX(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .success-message h3 {
+            color: #065f46;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .success-message h3 i {
+            margin-right: 10px;
+        }
+        
+        .success-message p {
+            color: #047857;
+            margin-bottom: 15px;
+        }
+        
+        .success-message .info {
+            background-color: #d1fae5;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .why-chess {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .why-chess h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .benefit-item i {
+            color: var(--primary);
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-group {
+                flex: 1 1 100%;
+            }
+            
+            .program-cards {
+                flex-direction: column;
+            }
+            
+            .program-card {
+                width: 100%;
+            }
+            
+            .success-message {
+                right: 10px;
+                left: 10px;
+                width: calc(100% - 20px);
+            }
+            
+            .benefits-grid,
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-chess-knight"></i>
+            </div>
+            <span class="logo-text">The Up And Up Chess Club</span>
+        </a>
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </header>
+    
+    <div class="container">
+        <div class="enrollment-header">
+            <h1>Group Chess <span>Partnership Programs</span></h1>
+            <p>Bring the power of chess education to your school, organization, or community. Fill out the form below to partner with The Up And Up Chess Club and create a customized chess program for your group.</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="group-enrollment-form">
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-building"></i>
+                        <h2>Organization Information</h2>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="organization_name">Organization Name <span class="required">*</span></label>
+                            <input type="text" id="organization_name" name="organization_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="organization_type">Organization Type <span class="required">*</span></label>
+                            <select id="organization_type" name="organization_type" required>
+                                <option value="" disabled selected>Select Type</option>
+                                <option value="Public Elementary School">Public Elementary School</option>
+                                <option value="Public Middle School">Public Middle School</option>
+                                <option value="Public High School">Public High School</option>
+                                <option value="Private School">Private School</option>
+                                <option value="Charter School">Charter School</option>
+                                <option value="Homeschool Co-op">Homeschool Co-op</option>
+                                <option value="After-School Program">After-School Program</option>
+                                <option value="Community Center">Community Center</option>
+                                <option value="Library">Library</option>
+                                <option value="Youth Organization">Youth Organization</option>
+                                <option value="Recreation Center">Recreation Center</option>
+                                <option value="Religious Organization">Religious Organization</option>
+                                <option value="Summer Camp">Summer Camp</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="grade_levels">Grade Levels Served <span class="required">*</span></label>
+                            <select id="grade_levels" name="grade_levels" required>
+                                <option value="" disabled selected>Select Grade Range</option>
+                                <option value="Pre-K to Kindergarten">Pre-K to Kindergarten</option>
+                                <option value="Elementary (K-5)">Elementary (K-5)</option>
+                                <option value="Middle School (6-8)">Middle School (6-8)</option>
+                                <option value="High School (9-12)">High School (9-12)</option>
+                                <option value="K-8">K-8</option>
+                                <option value="K-12">K-12</option>
+                                <option value="6-12">6-12</option>
+                                <option value="College/University">College/University</option>
+                                <option value="Adults">Adults</option>
+                                <option value="All Ages">All Ages</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="org_website">Organization Website (optional)</label>
+                            <input type="url" id="org_website" name="org_website" placeholder="https://example.org">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-user-tie"></i>
+                        <h2>Primary Contact Information</h2>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact_first_name">First Name <span class="required">*</span></label>
+                            <input type="text" id="contact_first_name" name="contact_first_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contact_last_name">Last Name <span class="required">*</span></label>
+                            <input type="text" id="contact_last_name" name="contact_last_name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact_title">Title/Position <span class="required">*</span></label>
+                            <input type="text" id="contact_title" name="contact_title" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contact_department">Department (optional)</label>
+                            <input type="text" id="contact_department" name="contact_department">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact_email">Email Address <span class="required">*</span></label>
+                            <input type="email" id="contact_email" name="contact_email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contact_phone">Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="contact_phone" name="contact_phone" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact_phone_alt">Alternative Phone (optional)</label>
+                            <input type="tel" id="contact_phone_alt" name="contact_phone_alt">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="best_contact_time">Best Time to Contact <span class="required">*</span></label>
+                            <select id="best_contact_time" name="best_contact_time" required>
+                                <option value="" disabled selected>Select Time</option>
+                                <option value="Morning (8am-12pm)">Morning (8am-12pm)</option>
+                                <option value="Afternoon (12pm-4pm)">Afternoon (12pm-4pm)</option>
+                                <option value="Evening (4pm-8pm)">Evening (4pm-8pm)</option>
+                                <option value="Anytime during business hours">Anytime during business hours</option>
+                                <option value="Specific times (please specify in notes)">Specific times (please specify in notes)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="decision_makers">Key Decision Makers <span class="required">*</span></label>
+                            <input type="text" id="decision_makers" name="decision_makers" placeholder="Names and titles of individuals involved in program approval" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-chess-board"></i>
+                        <h2>Program Requirements</h2>
+                    </div>
+                    
+                    <div class="why-chess">
+                        <h3>Why Chess for Your Organization?</h3>
+                        <div class="benefits-grid">
+                            <div class="benefit-item">
+                                <i class="fas fa-brain"></i>
+                                <span>Enhances critical thinking skills</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Improves academic performance</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-users"></i>
+                                <span>Builds community and teamwork</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Develops problem-solving abilities</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-chess-knight"></i>
+                                <span>Teaches strategic planning</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Improves focus and concentration</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <label>Select Group Program Level <span class="required">*</span></label>
+                    <div class="program-cards">
+                        <div class="program-card" data-value="School Essentials - $2,750">
+                            <div class="program-name">School Essentials</div>
+                            <div class="program-price">$2,750</div>
+                            <div class="program-note">10-week program</div>
+                            <div class="program-details">Weekly 60-minute sessions<br>Up to 20 students</div>
+                            <div class="program-tag">Most Popular for Schools</div>
+                        </div>
+                        
+                        <div class="program-card" data-value="Organization Package - $3,495">
+                            <div class="program-name">Organization Package</div>
+                            <div class="program-price">$3,495</div>
+                            <div class="program-note">12-week program</div>
+                            <div class="program-details">Weekly 90-minute sessions<br>Up to 25 students</div>
+                            <div class="program-tag">Equipment Included</div>
+                        </div>
+                        
+                        <div class="program-card" data-value="Custom Program - Price Varies">
+                            <div class="program-name">Custom Program</div>
+                            <div class="program-price">Custom</div>
+                            <div class="program-note">Tailored to your needs</div>
+                            <div class="program-details">Flexible format and duration<br>Customized curriculum</div>
+                            <div class="program-tag">Fully Customizable</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="group_program_level" name="group_program_level" required>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expected_participants">Expected Number of Participants <span class="required">*</span></label>
+                            <select id="expected_participants" name="expected_participants" required>
+                                <option value="" disabled selected>Select Range</option>
+                                <option value="5-10 participants">5-10 participants</option>
+                                <option value="11-15 participants">11-15 participants</option>
+                                <option value="16-20 participants">16-20 participants</option>
+                                <option value="21-25 participants">21-25 participants</option>
+                                <option value="26-30 participants">26-30 participants</option>
+                                <option value="31+ participants">31+ participants</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="participant_ages">Participant Age Range <span class="required">*</span></label>
+                            <select id="participant_ages" name="participant_ages" required>
+                                <option value="" disabled selected>Select Age Range</option>
+                                <option value="5-7 years">5-7 years</option>
+                                <option value="8-10 years">8-10 years</option>
+                                <option value="11-13 years">11-13 years</option>
+                                <option value="14-17 years">14-17 years</option>
+                                <option value="18+ years">18+ years</option>
+                                <option value="Mixed ages">Mixed ages</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="preferred_schedule_group">Preferred Schedule <span class="required">*</span></label>
+                            <select id="preferred_schedule_group" name="preferred_schedule_group" required>
+                                <option value="" disabled selected>Select Preferred Time</option>
+                                <option value="During school hours">During school hours</option>
+                                <option value="After-school program (3-5pm)">After-school program (3-5pm)</option>
+                                <option value="Evening program (5-8pm)">Evening program (5-8pm)</option>
+                                <option value="Weekend program">Weekend program</option>
+                                <option value="Summer program">Summer program</option>
+                                <option value="Multiple sessions per week">Multiple sessions per week</option>
+                                <option value="Flexible">Flexible - We can adjust to your schedule</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="program_duration">Desired Program Duration <span class="required">*</span></label>
+                            <select id="program_duration" name="program_duration" required>
+                                <option value="" disabled selected>Select Duration</option>
+                                <option value="6-8 weeks">6-8 weeks</option>
+                                <option value="10-12 weeks">10-12 weeks</option>
+                                <option value="Full semester (16-18 weeks)">Full semester (16-18 weeks)</option>
+                                <option value="Full academic year">Full academic year</option>
+                                <option value="Ongoing program">Ongoing program</option>
+                                <option value="One-time event">One-time event</option>
+                                <option value="Custom duration">Custom duration</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="facility_details">Facility Details <span class="required">*</span></label>
+                            <textarea id="facility_details" name="facility_details" placeholder="Describe the space where the chess program would take place (classroom, library, etc.)" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="services-container">
+                        <label>Additional Services Needed (Select all that apply)</label>
+                        <div class="services-grid">
+                            <div class="service-item">
+                                <input type="checkbox" id="service_equipment" name="additional_services" value="Chess equipment provision">
+                                <label for="service_equipment">Chess equipment</label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="service_tournament" name="additional_services" value="Tournament organization">
+                                <label for="service_tournament">Tournament organization</label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="service_curriculum" name="additional_services" value="Custom curriculum development">
+                                <label for="service_curriculum">Custom curriculum</label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="service_staff" name="additional_services" value="Staff training">
+                                <label for="service_staff">Staff training</label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="service_parent" name="additional_services" value="Parent workshops">
+                                <label for="service_parent">Parent workshops</label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="service_assessment" name="additional_services" value="Progress assessment">
+                                <label for="service_assessment">Progress assessment</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="program_goals">Program Goals & Objectives <span class="required">*</span></label>
+                            <textarea id="program_goals" name="program_goals" placeholder="What do you hope to achieve with this chess program? What outcomes are you looking for?" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="budget_timeline">Budget Timeline & Decision Process <span class="required">*</span></label>
+                            <textarea id="budget_timeline" name="budget_timeline" placeholder="Describe your budgeting timeline and decision-making process for program approval" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-file-signature"></i>
+                        <h2>Review & Submit</h2>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="partnership_agreement" required>
+                            <span>I understand this is a partnership inquiry, and a formal agreement will be prepared after consultation with The Up And Up Chess Club.</span>
+                        </label>
+                        
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="contact_agreement" required>
+                            <span>I authorize Truth Hall and The Up And Up Chess Club to contact me regarding this partnership request.</span>
+                        </label>
+                        
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="email_updates" checked>
+                            <span>I would like to receive email updates about chess programs, educational resources, and special offers for organizations.</span>
+                        </label>
+                    </div>
+                    
+                    <div id="group-error-message" class="error-message"></div>
+                    
+                    <button type="submit" class="submit-btn" id="group-submitBtn">
+                        <i class="fas fa-paper-plane"></i> Submit Partnership Request
+                    </button>
+                    
+                    <div class="next-steps">
+                        <h3>Next Steps</h3>
+                        <ul>
+                            <li>You'll receive a confirmation email within 24 hours</li>
+                            <li>Truth Hall will contact you to schedule a consultation</li>
+                            <li>We'll create a customized program proposal for your organization</li>
+                            <li>Questions? Email us at theuauchessclub@gmail.com</li>
+                        </ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="group-success-message" class="success-message">
+        <h3><i class="fas fa-check-circle"></i> Partnership Request Submitted!</h3>
+        <p>Thank you for your interest in partnering with The Up And Up Chess Club. We're excited about the possibility of bringing chess education to your organization!</p>
+        <div class="info">
+            <strong>Next Steps:</strong> You will receive a confirmation email shortly. Truth Hall will contact you within 24 hours to schedule a consultation and discuss your specific needs.
+        </div>
+    </div>
+    
+    <!-- Supabase Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Supabase client
+            const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            // Program selection
+            const groupProgramCards = document.querySelectorAll('.program-card');
+            const groupProgramInput = document.getElementById('group_program_level');
+            
+            groupProgramCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    groupProgramCards.forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    groupProgramInput.value = this.dataset.value;
+                });
+            });
+            
+            // Update program selection borders
+            function updateGroupProgramBorders() {
+                groupProgramCards.forEach(card => {
+                    if (card.dataset.value === groupProgramInput.value) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+            }
+            
+            // Get selected additional services
+            function getSelectedServices() {
+                const checkboxes = document.querySelectorAll('input[name="additional_services"]:checked');
+                return Array.from(checkboxes).map(cb => cb.value);
+            }
+            
+            // Form submission
+            const form = document.getElementById('group-enrollment-form');
+            const submitBtn = document.getElementById('group-submitBtn');
+            const errorDiv = document.getElementById('group-error-message');
+            const successMessage = document.getElementById('group-success-message');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate form
+                if (!groupProgramInput.value) {
+                    errorDiv.textContent = 'Please select a program level';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                // Show loading state
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                submitBtn.disabled = true;
+                errorDiv.style.display = 'none';
+                
+                try {
+                    // Prepare enrollment data to match database schema
+                    const enrollmentData = {
+                        organization_name: document.getElementById('organization_name').value,
+                        organization_type: document.getElementById('organization_type').value,
+                        grade_levels: document.getElementById('grade_levels').value,
+                        org_website: document.getElementById('org_website').value,
+                        // Set dummy values for required address fields (will update form later)
+                        org_address: 'Address to be provided',
+                        org_city: 'City to be provided', 
+                        org_zip: '00000',
+                        
+                        contact_first_name: document.getElementById('contact_first_name').value,
+                        contact_last_name: document.getElementById('contact_last_name').value,
+                        contact_title: document.getElementById('contact_title').value,
+                        contact_department: document.getElementById('contact_department').value,
+                        contact_email: document.getElementById('contact_email').value,
+                        contact_phone: document.getElementById('contact_phone').value,
+                        contact_phone_alt: document.getElementById('contact_phone_alt').value,
+                        best_contact_time: document.getElementById('best_contact_time').value,
+                        decision_makers: document.getElementById('decision_makers').value,
+                        
+                        group_program_level: groupProgramInput.value,
+                        expected_participants: parseInt(document.getElementById('expected_participants').value.match(/\d+/)[0]),
+                        participant_ages: document.getElementById('participant_ages').value,
+                        preferred_schedule_group: document.getElementById('preferred_schedule_group').value,
+                        program_duration: document.getElementById('program_duration').value,
+                        facility_details: document.getElementById('facility_details').value,
+                        additional_services: getSelectedServices(),
+                        program_goals: document.getElementById('program_goals').value,
+                        budget_timeline: document.getElementById('budget_timeline').value,
+                        
+                        authority_agreement: document.querySelector('input[name="partnership_agreement"]').checked,
+                        information_accuracy: document.querySelector('input[name="contact_agreement"]').checked,
+                        group_updates: document.querySelector('input[name="email_updates"]').checked
+                    };
+                    
+                    // Save to database
+                    const { data, error } = await supabase
+                        .from('group_enrollments')
+                        .insert([enrollmentData])
+                        .select();
+                    
+                    if (error) {
+                        throw new Error('Database error: ' + error.message);
+                    }
+                    
+                    // Show success message
+                    successMessage.style.display = 'block';
+                    
+                    // Send confirmation email
+                    await sendGroupConfirmationEmail(enrollmentData);
+                    
+                    // Reset form
+                    this.reset();
+                    updateGroupProgramBorders();
+                    
+                    // Hide success message after 8 seconds
+                    setTimeout(() => {
+                        const successMessage = document.getElementById('group-success-message');
+                        successMessage.style.opacity = '0';
+                        successMessage.style.transform = 'translateX(100%)';
+                        successMessage.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                        
+                        // Actually hide it after the transition completes
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                            successMessage.style.opacity = '1';
+                            successMessage.style.transform = 'translateX(0)';
+                        }, 500);
+                    }, 8000);
+                    
+                    // Enhanced FormSubmit email confirmation for group enrollment
+                    await sendGroupFormSubmitConfirmation(enrollmentData);
+                    
+                } catch (error) {
+                    console.error('Error submitting group enrollment:', error);
+                    console.error('Error details:', error.message);
+                    console.error('Error code:', error.code);
+                    errorDiv.textContent = `Error submitting partnership request: ${error.message || error}. Please try again or contact us directly at theuauchessclub@gmail.com`;
+                    errorDiv.style.display = 'block';
+                } finally {
+                    // Reset submit button
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Partnership Request';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+        
+        // Send group confirmation email via EmailJS
+        async function sendGroupConfirmationEmail(enrollmentData) {
+            // Check if EmailJS configuration is available
+            if (!window.CHESS_CLUB_EMAIL_CONFIG || !window.CHESS_CLUB_EMAIL_CONFIG.isConfigured()) {
+                console.log('EmailJS not configured, skipping direct email send');
+                return;
+            }
+
+            try {
+                const contactName = `${enrollmentData.contact_first_name} ${enrollmentData.contact_last_name}`;
+                
+                const emailContent = `Dear ${contactName},
+
+Thank you for your interest in partnering with The Up And Up Chess Club for ${enrollmentData.organization_name}!
+
+PARTNERSHIP REQUEST DETAILS:
+• Organization: ${enrollmentData.organization_name}
+• Contact Person: ${contactName} (${enrollmentData.contact_title})
+• Program: ${enrollmentData.group_program_level}
+• Expected Participants: ${enrollmentData.expected_participants}
+• Participant Ages: ${enrollmentData.participant_ages}
+• Preferred Schedule: ${enrollmentData.preferred_schedule_group}
+• Program Duration: ${enrollmentData.program_duration}
+
+NEXT STEPS:
+We will contact you within 24 hours to:
+1. Schedule a consultation call to discuss your specific needs
+2. Provide detailed program information and curriculum
+3. Create a customized chess program for your organization
+4. Coordinate scheduling and logistics
+
+ADDITIONAL SERVICES REQUESTED:
+${enrollmentData.additional_services && enrollmentData.additional_services.length > 0 
+  ? enrollmentData.additional_services.map(service => `• ${service}`).join('\n') 
+  : '• No additional services requested'}
+
+CONTACT INFORMATION:
+• Email: theuauchessclub@gmail.com
+• Phone: (240) 360-0809
+• Best time to reach you: ${enrollmentData.best_contact_time}
+
+We're excited about the opportunity to bring chess education to your organization and help develop critical thinking skills in your participants!
+
+Best regards,
+Truth Hall
+Founder & Lead Instructor
+The Up And Up Chess Club`;
+
+                // Use the centralized email configuration
+                const result = await window.CHESS_CLUB_EMAIL_CONFIG.sendEmail(
+                    contactName,
+                    enrollmentData.contact_email,
+                    'Chess Club Partnership Request Confirmation',
+                    emailContent,
+                    {
+                        organization: enrollmentData.organization_name,
+                        program: enrollmentData.group_program_level
+                    }
+                );
+
+                if (result.success) {
+                    console.log('EmailJS group confirmation email sent successfully');
+                } else {
+                    console.error('EmailJS group email failed:', result.error);
+                }
+
+            } catch (error) {
+                console.error('EmailJS group email error:', error);
+                // Don't throw error to avoid disrupting form submission
+            }
+        }
+
+        // Enhanced FormSubmit email confirmation for group enrollment
+        async function sendGroupFormSubmitConfirmation(enrollmentData) {
+            try {
+                const contactName = `${enrollmentData.contact_first_name} ${enrollmentData.contact_last_name}`;
+                
+                // Create comprehensive partnership confirmation email
+                const emailMessage = `Dear ${contactName},
+
+Thank you for your interest in partnering with The Up And Up Chess Club for ${enrollmentData.organization_name}!
+
+PARTNERSHIP REQUEST CONFIRMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ORGANIZATION INFORMATION:
+• Organization Name: ${enrollmentData.organization_name}
+• Organization Type: ${enrollmentData.organization_type}
+• Grade Levels Served: ${enrollmentData.grade_levels}
+• Website: ${enrollmentData.org_website || 'Not provided'}
+
+CONTACT DETAILS:
+• Primary Contact: ${contactName}
+• Title/Position: ${enrollmentData.contact_title}
+• Department: ${enrollmentData.contact_department || 'Not specified'}
+• Email: ${enrollmentData.contact_email}
+• Phone: ${enrollmentData.contact_phone}
+• Alternative Phone: ${enrollmentData.contact_phone_alt || 'Not provided'}
+• Best Contact Time: ${enrollmentData.best_contact_time}
+• Decision Makers: ${enrollmentData.decision_makers}
+
+PROGRAM REQUIREMENTS:
+• Program Level: ${enrollmentData.group_program_level}
+• Expected Participants: ${enrollmentData.expected_participants}
+• Participant Ages: ${enrollmentData.participant_ages}
+• Preferred Schedule: ${enrollmentData.preferred_schedule_group}
+• Program Duration: ${enrollmentData.program_duration}
+• Facility Details: ${enrollmentData.facility_details}
+• Program Goals: ${enrollmentData.program_goals}
+• Budget Timeline: ${enrollmentData.budget_timeline}
+
+ADDITIONAL SERVICES REQUESTED:
+${enrollmentData.additional_services && enrollmentData.additional_services.length > 0 
+  ? enrollmentData.additional_services.map(service => `• ${service}`).join('\n') 
+  : '• No additional services requested'}
+
+NEXT STEPS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+We will contact you within 24 hours to:
+
+1. Schedule a comprehensive consultation call to discuss your specific needs
+2. Provide detailed program information, curriculum, and methodologies
+3. Create a customized chess education program for your organization
+4. Discuss scheduling options that work with your calendar
+5. Coordinate logistics, facility requirements, and equipment needs
+6. Provide pricing details and contract information
+
+PROGRAM BENEFITS FOR YOUR PARTICIPANTS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Our chess programs help participants develop:
+• Critical thinking and problem-solving skills
+• Strategic planning and decision-making abilities
+• Patience, focus, and concentration
+• Mathematical and analytical thinking
+• Confidence and leadership skills
+• Social skills and sportsmanship
+
+WHAT MAKES US DIFFERENT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Culturally relevant chess education approach
+• Experienced instructor with proven track record
+• Flexible program formats to fit your needs
+• Research-based curriculum design
+• Ongoing support and progress tracking
+
+CONTACT INFORMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📧 Email: theuauchessclub@gmail.com
+📞 Phone: (240) 360-0809
+🌐 Website: Coming Soon
+📍 Service Area: Greater DMV Region
+
+We're excited about the opportunity to bring high-quality chess education to ${enrollmentData.organization_name} and help develop critical thinking skills in your participants!
+
+Thank you for considering The Up And Up Chess Club as your chess education partner.
+
+Best regards,
+
+Truth Hall
+Founder & Lead Instructor
+The Up And Up Chess Club
+
+P.S. Please save our contact information and feel free to reach out with any preliminary questions before our consultation call!`;
+
+                // Method 1: Send confirmation to organization contact (primary recipient)
+                const contactFormData = new FormData();
+                contactFormData.append('name', 'The Up And Up Chess Club');
+                contactFormData.append('email', 'theuauchessclub@gmail.com');
+                contactFormData.append('_subject', `Partnership Request Confirmation - ${enrollmentData.organization_name}`);
+                contactFormData.append('message', emailMessage);
+                contactFormData.append('_template', 'box');
+                contactFormData.append('_captcha', 'false');
+                contactFormData.append('_cc', 'hall.truth@gmail.com');
+                contactFormData.append('_autoresponse', `Dear ${contactName},
+
+Thank you for submitting your partnership request for ${enrollmentData.organization_name}!
+
+📋 PARTNERSHIP REQUEST CONFIRMATION
+Your group chess program application has been successfully received and is being processed. We are excited about the potential opportunity to bring quality chess education to your organization.
+
+🔗 REVIEW YOUR SUBMISSION
+You can review the details of your partnership request at any time by visiting:
+https://youware.com/chess-club-partnership-review
+
+📞 NEXT STEPS
+• Our team will review your request within 24 hours
+• Truth Hall will contact you personally to schedule a consultation
+• We will create a customized program proposal for your organization
+• Detailed pricing and contract information will be provided
+
+📧 QUESTIONS?
+If you have any questions or need to make changes to your submission, please contact us:
+• Email: theuauchessclub@gmail.com
+• Phone: (240) 360-0809
+• Best time to reach you: ${enrollmentData.best_contact_time}
+
+We look forward to partnering with ${enrollmentData.organization_name}!
+
+Best regards,
+Truth Hall & The Chess Club Team`);
+
+                // Send to organization contact as primary recipient
+                try {
+                    const contactResponse = await fetch(`https://formsubmit.co/ajax/${enrollmentData.contact_email}`, {
+                        method: 'POST',
+                        body: contactFormData
+                    });
+                    
+                    const contactResult = await contactResponse.json();
+                    if (contactResult.success === "true") {
+                        console.log('FormSubmit group confirmation email sent successfully');
+                    } else {
+                        console.error('FormSubmit group confirmation failed:', contactResult.message);
+                    }
+                } catch (contactError) {
+                    console.error('FormSubmit group confirmation error:', contactError);
+                }
+
+                // Method 2: Send detailed notification to club
+                const clubMessage = `NEW GROUP PARTNERSHIP REQUEST RECEIVED!
+
+Organization: ${enrollmentData.organization_name}
+Type: ${enrollmentData.organization_type}
+Contact: ${contactName} (${enrollmentData.contact_title})
+Email: ${enrollmentData.contact_email}
+Phone: ${enrollmentData.contact_phone}
+
+PROGRAM REQUEST DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Program: ${enrollmentData.group_program_level}
+Participants: ${enrollmentData.expected_participants}
+Ages: ${enrollmentData.participant_ages}
+Schedule: ${enrollmentData.preferred_schedule_group}
+Duration: ${enrollmentData.program_duration}
+
+ORGANIZATION DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Grade Levels: ${enrollmentData.grade_levels}
+Department: ${enrollmentData.contact_department || 'Not specified'}
+Website: ${enrollmentData.org_website || 'Not provided'}
+Decision Makers: ${enrollmentData.decision_makers}
+
+LOGISTICS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Best Contact Time: ${enrollmentData.best_contact_time}
+Alt Phone: ${enrollmentData.contact_phone_alt || 'Not provided'}
+Facility Details: ${enrollmentData.facility_details}
+Budget Timeline: ${enrollmentData.budget_timeline}
+
+PROGRAM GOALS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${enrollmentData.program_goals}
+
+ADDITIONAL SERVICES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${enrollmentData.additional_services && enrollmentData.additional_services.length > 0 
+  ? enrollmentData.additional_services.map(service => `• ${service}`).join('\n') 
+  : '• None requested'}
+
+ACTION REQUIRED: Contact organization within 24 hours to schedule consultation call.
+
+Request Time: ${new Date().toLocaleString()}
+
+Priority: HIGH - Group partnership opportunity`;
+
+                const clubFormData = new FormData();
+                clubFormData.append('name', contactName);
+                clubFormData.append('email', 'theuauchessclub@gmail.com');
+                clubFormData.append('_subject', `New Partnership Request: ${enrollmentData.organization_name}`);
+                clubFormData.append('message', clubMessage);
+                clubFormData.append('_template', 'table');
+                clubFormData.append('_captcha', 'false');
+
+                // Send to club
+                try {
+                    const clubResponse = await fetch('https://formsubmit.co/ajax/theuauchessclub@gmail.com', {
+                        method: 'POST',
+                        body: clubFormData
+                    });
+                    
+                    const clubResult = await clubResponse.json();
+                    if (clubResult.success === "true") {
+                        console.log('FormSubmit club partnership notification sent successfully');
+                    } else {
+                        console.error('FormSubmit club partnership notification failed:', clubResult.message);
+                    }
+                } catch (clubError) {
+                    console.error('FormSubmit club partnership notification error:', clubError);
+                }
+
+            } catch (error) {
+                console.error('FormSubmit group confirmation error:', error);
+                // Don't throw error to avoid disrupting form submission
+            }
+        }
+    </script>
+</body>
+</html>
