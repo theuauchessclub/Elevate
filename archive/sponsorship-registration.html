@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sponsorship Registration - The Up And Up Chess Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AfH-7ZdCbC9fXsBnmvR0v4eFtLdgaUSiQpTf62oyCaY2YiqIwkastnJ9u8R8vhJXGXmRapy5JXRhIU27&currency=USD&intent=capture"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        
+        .tier-section {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .tier-section.hidden {
+            display: none;
+        }
+        
+        .tier-benefits {
+            transition: all 0.5s ease-in-out;
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .tier-benefits.fade-in {
+            animation: fadeInUp 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 to-teal-100 min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div id="tier-icon" class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-chess text-white text-3xl"></i>
+            </div>
+            <h1 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Sponsorship Registration
+            </h1>
+            <p class="text-xl text-gray-700 max-w-2xl mx-auto">
+                Join our community of chess education supporters
+            </p>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+            <form id="sponsorship-form" class="space-y-6">
+                
+                <!-- Tier Selection -->
+                <div class="border-b border-gray-200 pb-6">
+                    <label for="sponsorshipTier" class="block text-sm font-bold text-gray-700 mb-3">Select Sponsorship Tier *</label>
+                    <select id="sponsorshipTier" name="sponsorshipTier" required 
+                        class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg font-semibold">
+                        <option value="">Choose your sponsorship level...</option>
+                        <option value="pawn">Pawn Supporter - $200 (School Club Supplies)</option>
+                        <option value="knight">Knight Patron - $500 (Student Sponsorship)</option>
+                        <option value="bishop">Bishop Benefactor - $1,500 (Club Semester Sponsorship)</option>
+                        <option value="custom">Custom Donation - $1+ (Any Amount)</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Tier Benefits Display -->
+                <div id="tier-benefits-display" class="hidden">
+                    <div id="tier-benefits-content" class="tier-benefits"></div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="pt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="firstName" class="block text-sm font-bold text-gray-700 mb-2">First Name *</label>
+                            <input type="text" id="firstName" name="firstName" required 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="lastName" class="block text-sm font-bold text-gray-700 mb-2">Last Name *</label>
+                            <input type="text" id="lastName" name="lastName" required 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Email Address *</label>
+                        <input type="email" id="email" name="email" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="phone" class="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="organization" class="block text-sm font-bold text-gray-700 mb-2">Organization/Company</label>
+                        <input type="text" id="organization" name="organization" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- School Information (All Tiers) -->
+                <div id="school-info-section" class="pt-6 border-t border-gray-200 hidden">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">School Information</h3>
+                    
+                    <div>
+                        <label for="schoolName" class="block text-sm font-bold text-gray-700 mb-2">School Name *</label>
+                        <input type="text" id="schoolName" name="schoolName" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="schoolAddress" class="block text-sm font-bold text-gray-700 mb-2">School Address</label>
+                        <textarea id="schoolAddress" name="schoolAddress" rows="3" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="contactPerson" class="block text-sm font-bold text-gray-700 mb-2">School Contact Person</label>
+                        <input type="text" id="contactPerson" name="contactPerson" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- Custom Donation Amount -->
+                <div id="custom-amount-section" class="tier-section hidden pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Custom Donation Amount</h3>
+                    
+                    <div>
+                        <label for="customAmount" class="block text-sm font-bold text-gray-700 mb-2">Donation Amount (minimum $1) *</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">$</span>
+                            <input type="number" id="customAmount" name="customAmount" min="1" step="0.01"
+                                placeholder="Enter your donation amount"
+                                class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg">
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="donationPurpose" class="block text-sm font-bold text-gray-700 mb-2">How would you like your donation to be used?</label>
+                        <select id="donationPurpose" name="donationPurpose" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="">Select donation purpose (optional)</option>
+                            <option value="general">General Club Operations</option>
+                            <option value="equipment">Chess Equipment & Supplies</option>
+                            <option value="student-scholarships">Student Scholarships</option>
+                            <option value="tournament-support">Tournament Entry Fees</option>
+                            <option value="instructor-training">Instructor Training</option>
+                            <option value="travel-assistance">Student Travel Assistance</option>
+                            <option value="program-expansion">Program Expansion</option>
+                            <option value="technology">Technology & Digital Resources</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="donationType" class="block text-sm font-bold text-gray-700 mb-2">Donation Frequency</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="donationType" value="one-time" checked class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">One-time donation</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="donationType" value="monthly" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Monthly recurring donation</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="donationType" value="annual" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Annual donation</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Information (Knight Tier) -->
+                <div id="student-info-section" class="tier-section hidden pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Student Information (if known)</h3>
+                    
+                    <div>
+                        <label for="studentName" class="block text-sm font-bold text-gray-700 mb-2">Student Name</label>
+                        <input type="text" id="studentName" name="studentName" 
+                            placeholder="Leave blank if student not yet selected"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="studentAge" class="block text-sm font-bold text-gray-700 mb-2">Student Age</label>
+                            <input type="number" id="studentAge" name="studentAge" min="5" max="18"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="chessLevel" class="block text-sm font-bold text-gray-700 mb-2">Chess Experience</label>
+                            <select id="chessLevel" name="chessLevel" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                <option value="">Select experience level</option>
+                                <option value="beginner">Beginner (0-6 months)</option>
+                                <option value="novice">Novice (6 months - 1 year)</option>
+                                <option value="intermediate">Intermediate (1-2 years)</option>
+                                <option value="advanced">Advanced (2+ years)</option>
+                                <option value="tournament">Tournament Player</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="studentSchool" class="block text-sm font-bold text-gray-700 mb-2">Student's School</label>
+                        <input type="text" id="studentSchool" name="studentSchool" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- Tournament Preferences (Knight Tier) -->
+                <div id="tournament-section" class="tier-section hidden">
+                    <h4 class="text-lg font-bold text-gray-900 mb-4">Tournament & Travel Preferences</h4>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Preferred Tournament Types</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="tournamentTypes" value="local" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Local Tournaments</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="tournamentTypes" value="regional" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Regional Tournaments</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="tournamentTypes" value="national" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">National Tournaments</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="travelRadius" class="block text-sm font-bold text-gray-700 mb-2">Maximum Travel Distance</label>
+                        <select id="travelRadius" name="travelRadius" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="">Select travel preference</option>
+                            <option value="local">Local only (within 50 miles)</option>
+                            <option value="regional">Regional (within 200 miles)</option>
+                            <option value="national">National (anywhere in US)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Program Details (Bishop Tier) -->
+                <div id="program-section" class="tier-section hidden pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Program Preferences</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="semester" class="block text-sm font-bold text-gray-700 mb-2">Preferred Semester</label>
+                            <select id="semester" name="semester" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                <option value="">Select semester</option>
+                                <option value="fall-2024">Fall 2024</option>
+                                <option value="spring-2025">Spring 2025</option>
+                                <option value="fall-2025">Fall 2025</option>
+                                <option value="next-available">Next Available</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="studentCount" class="block text-sm font-bold text-gray-700 mb-2">Expected Number of Students</label>
+                            <select id="studentCount" name="studentCount" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                <option value="">Select range</option>
+                                <option value="10-15">10-15 students</option>
+                                <option value="16-25">16-25 students</option>
+                                <option value="26-35">26-35 students</option>
+                                <option value="36+">36+ students</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Student Age Range</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="ageRange" value="elementary" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Elementary (K-5)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="ageRange" value="middle" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Middle School (6-8)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="ageRange" value="high" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">High School (9-12)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="meetingTime" class="block text-sm font-bold text-gray-700 mb-2">Preferred Meeting Day/Time</label>
+                        <input type="text" id="meetingTime" name="meetingTime" 
+                            placeholder="e.g., Tuesdays after school, 3:30-4:30 PM"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <!-- Corporate Recognition for Bishop Tier -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Corporate Recognition Preferences</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="recognition" value="website" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Include company name on club website</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="recognition" value="materials" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Include logo on program materials</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="recognition" value="events" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Recognition at school events</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="recognition" value="reports" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Quarterly impact reports</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="pt-6 border-t border-gray-200">
+                    <label for="message" class="block text-sm font-bold text-gray-700 mb-2">Additional Comments</label>
+                    <textarea id="message" name="message" rows="4" 
+                        placeholder="Any special requests or additional information..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+                </div>
+
+                <!-- Terms and Agreement -->
+                <div id="terms-section" class="bg-emerald-50 rounded-xl p-6 hidden">
+                    <div class="flex items-start space-x-3">
+                        <input type="checkbox" id="terms" name="terms" required 
+                            class="w-5 h-5 text-emerald-600 mt-1">
+                        <label for="terms" id="terms-text" class="text-sm text-gray-700">
+                            <!-- Terms text will be populated dynamically based on tier selection -->
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Payment Options -->
+                <div class="text-center pt-6 space-y-6">
+                    <!-- PayPal Payment Button (appears for preset tiers) -->
+                    <div id="paypal-payment-section" class="hidden">
+                        <h4 class="text-lg font-bold text-gray-900 mb-4">Quick Payment with PayPal</h4>
+                        <div id="paypal-button-registration" class="max-w-sm mx-auto mb-6"></div>
+                        <div class="flex items-center justify-center mb-4">
+                            <div class="border-t border-gray-300 flex-grow"></div>
+                            <span class="px-4 text-gray-500 font-medium">OR</span>
+                            <div class="border-t border-gray-300 flex-grow"></div>
+                        </div>
+                    </div>
+
+                    <!-- Form Registration Button -->
+                    <button type="submit" id="submit-btn"
+                        class="w-full md:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-heart mr-3"></i>
+                        <span id="submit-btn-text">Register as Sponsor</span>
+                    </button>
+                    
+                    <p class="text-sm text-gray-600 mt-4">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        PayPal payment is instant. Form registration allows for detailed information collection.
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-8">
+            <a href="index.html#sponsorship" class="text-emerald-600 hover:text-emerald-700 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Sponsorship Options
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Tier configuration
+        const tierConfig = {
+            pawn: {
+                title: "Pawn Supporter",
+                amount: "$200",
+                icon: "fas fa-chess-pawn",
+                color: "amber",
+                description: "School Club Supplies",
+                benefits: [
+                    "Tournament Chess Boards",
+                    "Professional Carry Cases", 
+                    "Strategy Notepads",
+                    "Club Paraphernalia"
+                ],
+                terms: "I agree to the terms of sponsorship and understand that this $200 contribution will provide tournament chess boards, carry cases, notepads, and club paraphernalia for a school chess club."
+            },
+            custom: {
+                title: "Custom Donation",
+                amount: "Your Amount",
+                icon: "fas fa-heart",
+                color: "rose",
+                description: "Support Chess Education",
+                benefits: [
+                    "Direct support for chess education",
+                    "Flexible donation purpose",
+                    "One-time or recurring options",
+                    "Personal impact on students",
+                    "Thank you recognition"
+                ],
+                terms: "I agree to the terms of donation and understand that my contribution will support chess education initiatives as specified in my donation purpose selection."
+            },
+            knight: {
+                title: "Knight Patron",
+                amount: "$500", 
+                icon: "fas fa-chess-knight",
+                color: "emerald",
+                description: "Student Sponsorship",
+                benefits: [
+                    "All Tier 1 Benefits",
+                    "Full Tuition Credit",
+                    "Tournament Registration",
+                    "Travel Assistance", 
+                    "Lodging Support",
+                    "Meal Provision"
+                ],
+                terms: "I agree to the terms of sponsorship and understand that this $500 contribution will provide all Tier 1 benefits plus full tuition credit for a qualifying student, tournament registration assistance, travel support, lodging, and meals."
+            },
+            bishop: {
+                title: "Bishop Benefactor",
+                amount: "$1,500",
+                icon: "fas fa-chess-bishop", 
+                color: "purple",
+                description: "Club Semester Sponsorship",
+                benefits: [
+                    "Weekly Chess Instructions",
+                    "Professional Chess Boards",
+                    "Tournament Entry Included",
+                    "10 Student Scholarships",
+                    "Professional Instruction"
+                ],
+                terms: "I agree to the terms of sponsorship and understand that this $1,500 contribution will provide a complete semester of weekly chess instructions, professional chess boards, tournament entry, and 10 student scholarships."
+            }
+        };
+
+        // Get elements
+        const tierSelect = document.getElementById('sponsorshipTier');
+        const tierIcon = document.getElementById('tier-icon');
+        const benefitsDisplay = document.getElementById('tier-benefits-display');
+        const benefitsContent = document.getElementById('tier-benefits-content');
+        const schoolInfoSection = document.getElementById('school-info-section');
+        const customAmountSection = document.getElementById('custom-amount-section');
+        const studentInfoSection = document.getElementById('student-info-section');
+        const tournamentSection = document.getElementById('tournament-section');
+        const programSection = document.getElementById('program-section');
+        const termsSection = document.getElementById('terms-section');
+        const termsText = document.getElementById('terms-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const schoolNameField = document.getElementById('schoolName');
+        const organizationField = document.getElementById('organization');
+        const customAmountField = document.getElementById('customAmount');
+
+        // Handle tier selection
+        tierSelect.addEventListener('change', function() {
+            const selectedTier = this.value;
+            
+            if (selectedTier) {
+                const config = tierConfig[selectedTier];
+                
+                // Update icon and colors
+                updateTierStyling(config);
+                
+                // Show benefits
+                showTierBenefits(config);
+                
+                // Show/hide appropriate sections
+                updateFormSections(selectedTier);
+                
+                // Show terms
+                showTerms(config);
+                
+                // Enable submit button
+                submitBtn.disabled = false;
+            } else {
+                // Hide everything if no tier selected
+                benefitsDisplay.classList.add('hidden');
+                schoolInfoSection.classList.add('hidden');
+                hideAllTierSections();
+                termsSection.classList.add('hidden');
+                submitBtn.disabled = true;
+            }
+        });
+
+        function updateTierStyling(config) {
+            // Update icon
+            tierIcon.className = `w-20 h-20 bg-gradient-to-br from-${config.color}-400 to-${config.color}-600 rounded-3xl flex items-center justify-center mx-auto mb-6`;
+            tierIcon.innerHTML = `<i class="${config.icon} text-white text-3xl"></i>`;
+        }
+
+        function showTierBenefits(config) {
+            benefitsContent.innerHTML = `
+                <div class="bg-${config.color}-50 rounded-2xl p-6 mb-6 fade-in">
+                    <div class="text-center mb-4">
+                        <h3 class="text-2xl font-bold text-gray-900">${config.title}</h3>
+                        <p class="text-3xl font-black text-${config.color}-600">${config.amount}</p>
+                        <p class="text-${config.color}-700 font-semibold">${config.description}</p>
+                    </div>
+                    <div class="text-left">
+                        <h4 class="font-bold text-${config.color}-800 mb-3">Your sponsorship includes:</h4>
+                        <ul class="space-y-2 text-${config.color}-700">
+                            ${config.benefits.map(benefit => `
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-${config.color}-600 mr-3 w-4"></i>
+                                    ${benefit}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            benefitsDisplay.classList.remove('hidden');
+        }
+
+        function updateFormSections(selectedTier) {
+            // Hide all tier-specific sections first
+            hideAllTierSections();
+            
+            // Show sections based on tier
+            if (selectedTier === 'custom') {
+                customAmountSection.classList.remove('hidden');
+                customAmountField.required = true;
+                // For custom donations, school info is optional
+                schoolInfoSection.classList.remove('hidden');
+                schoolNameField.required = false;
+            } else {
+                // For preset tiers, always show school info as required
+                schoolInfoSection.classList.remove('hidden');
+                schoolNameField.required = true;
+                
+                if (selectedTier === 'knight') {
+                    studentInfoSection.classList.remove('hidden');
+                    tournamentSection.classList.remove('hidden');
+                } else if (selectedTier === 'bishop') {
+                    programSection.classList.remove('hidden');
+                    organizationField.required = true;
+                }
+            }
+        }
+
+        function hideAllTierSections() {
+            customAmountSection.classList.add('hidden');
+            studentInfoSection.classList.add('hidden');
+            tournamentSection.classList.add('hidden'); 
+            programSection.classList.add('hidden');
+            organizationField.required = false;
+            schoolNameField.required = false;
+            customAmountField.required = false;
+        }
+
+        function showTerms(config) {
+            termsText.textContent = config.terms + " I authorize The Up And Up Chess Club to contact me regarding this sponsorship.";
+            termsSection.classList.remove('hidden');
+        }
+
+        // Form submission
+        document.getElementById('sponsorship-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const selectedTier = tierSelect.value;
+            if (!selectedTier) {
+                alert('Please select a sponsorship tier.');
+                return;
+            }
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (data[key]) {
+                    if (Array.isArray(data[key])) {
+                        data[key].push(value);
+                    } else {
+                        data[key] = [data[key], value];
+                    }
+                } else {
+                    data[key] = value;
+                }
+            });
+            
+            // Add tier information
+            const config = tierConfig[selectedTier];
+            data.tier = config.title;
+            data.tierLevel = selectedTier;
+            
+            // Handle custom amount
+            if (selectedTier === 'custom') {
+                data.amount = `$${data.customAmount}`;
+            } else {
+                data.amount = config.amount;
+            }
+            
+            // Show loading state
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Processing...';
+            submitBtn.disabled = true;
+            
+            // Create email content
+            setTimeout(() => {
+                const emailSubject = `New ${config.title} Registration - ${data.firstName} ${data.lastName}`;
+                
+                let emailBody = `
+New ${config.title} Registration
+
+SPONSOR DETAILS:
+Name: ${data.firstName} ${data.lastName}
+Email: ${data.email}
+Phone: ${data.phone || 'Not provided'}
+Organization: ${data.organization || 'Not provided'}
+
+SCHOOL INFORMATION:
+School Name: ${data.schoolName || 'Not provided'}
+School Address: ${data.schoolAddress || 'Not provided'}
+Contact Person: ${data.contactPerson || 'Not provided'}
+
+SPONSORSHIP DETAILS:
+Tier: ${config.title} (${data.amount})
+Benefits: ${config.benefits.join(', ')}
+                `;
+
+                // Add custom donation information
+                if (selectedTier === 'custom') {
+                    emailBody += `
+
+CUSTOM DONATION DETAILS:
+Amount: $${data.customAmount}
+Purpose: ${data.donationPurpose || 'General Club Operations'}
+Frequency: ${data.donationType || 'One-time'}
+                    `;
+                }
+
+                // Add tier-specific information
+                if (selectedTier === 'knight') {
+                    emailBody += `
+
+STUDENT INFORMATION:
+Student Name: ${data.studentName || 'To be selected'}
+Student Age: ${data.studentAge || 'Not specified'}
+Student's School: ${data.studentSchool || 'Not specified'}
+Chess Experience: ${data.chessLevel || 'Not specified'}
+
+TOURNAMENT PREFERENCES:
+Tournament Types: ${Array.isArray(data.tournamentTypes) ? data.tournamentTypes.join(', ') : (data.tournamentTypes || 'Not specified')}
+Travel Radius: ${data.travelRadius || 'Not specified'}
+                    `;
+                } else if (selectedTier === 'bishop') {
+                    emailBody += `
+
+PROGRAM DETAILS:
+Preferred Semester: ${data.semester || 'Not specified'}
+Expected Students: ${data.studentCount || 'Not specified'}
+Age Range: ${Array.isArray(data.ageRange) ? data.ageRange.join(', ') : (data.ageRange || 'Not specified')}
+Meeting Time: ${data.meetingTime || 'Not specified'}
+
+CORPORATE RECOGNITION:
+Recognition Preferences: ${Array.isArray(data.recognition) ? data.recognition.join(', ') : (data.recognition || 'None selected')}
+                    `;
+                }
+
+                emailBody += `
+
+ADDITIONAL COMMENTS:
+${data.message || 'None provided'}
+
+Registration Time: ${new Date().toLocaleString()}
+                `;
+
+                if (selectedTier === 'bishop') {
+                    emailBody += `
+
+*** THIS IS A MAJOR SPONSORSHIP - PRIORITY FOLLOW-UP REQUIRED ***`;
+                }
+                
+                // Send email
+                window.location.href = `mailto:theuauchessclub@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                
+                // Redirect to success page
+                setTimeout(() => {
+                    window.location.href = `sponsorship-success.html?tier=${selectedTier}`;
+                }, 1000);
+                
+            }, 2000);
+        });
+
+        // PayPal Integration for Registration Page
+        function initializeRegistrationPayPal() {
+            const selectedTier = tierSelect.value;
+            const paypalSection = document.getElementById('paypal-payment-section');
+            const paypalContainer = document.getElementById('paypal-button-registration');
+            const submitBtnText = document.getElementById('submit-btn-text');
+
+            if (!selectedTier || selectedTier === 'custom') {
+                paypalSection.classList.add('hidden');
+                submitBtnText.textContent = selectedTier === 'custom' ? 'Setup Custom Donation' : 'Register as Sponsor';
+                return;
+            }
+
+            // Show PayPal section for preset tiers
+            paypalSection.classList.remove('hidden');
+            paypalContainer.innerHTML = '';
+
+            const config = tierConfig[selectedTier];
+            const amount = selectedTier === 'pawn' ? '200.00' : 
+                          selectedTier === 'knight' ? '500.00' : 
+                          selectedTier === 'bishop' ? '1500.00' : '0.00';
+
+            submitBtnText.textContent = `Register as ${config.title}`;
+
+            if (typeof paypal !== 'undefined' && amount !== '0.00') {
+                paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: amount
+                                },
+                                description: `${config.title} - ${config.description}`
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            alert(`Thank you for your $${amount} ${config.title} sponsorship, ${details.payer.name.given_name}!`);
+                            window.location.href = `sponsorship-success.html?tier=${selectedTier}&amount=${amount}&paypal=true`;
+                        });
+                    },
+                    onError: function(err) {
+                        console.error('PayPal Error:', err);
+                        alert('Payment failed. Please try the form registration below.');
+                    }
+                }).render('#paypal-button-registration');
+            }
+        }
+
+        // Update tier selection handler to include PayPal initialization
+        const originalTierHandler = tierSelect.addEventListener;
+        tierSelect.addEventListener('change', function() {
+            const selectedTier = this.value;
+            
+            if (selectedTier) {
+                const config = tierConfig[selectedTier];
+                
+                // Update icon and colors
+                updateTierStyling(config);
+                
+                // Show benefits
+                showTierBenefits(config);
+                
+                // Show/hide appropriate sections
+                updateFormSections(selectedTier);
+                
+                // Show terms
+                showTerms(config);
+                
+                // Initialize PayPal for this tier
+                setTimeout(initializeRegistrationPayPal, 100);
+                
+                // Enable submit button
+                submitBtn.disabled = false;
+            } else {
+                // Hide everything if no tier selected
+                benefitsDisplay.classList.add('hidden');
+                document.getElementById('paypal-payment-section').classList.add('hidden');
+                schoolInfoSection.classList.add('hidden');
+                hideAllTierSections();
+                termsSection.classList.add('hidden');
+                submitBtn.disabled = true;
+            }
+        });
+
+        // Initialize form state
+        submitBtn.disabled = true;
+
+        // Initialize PayPal when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof paypal !== 'undefined') {
+                // PayPal is loaded
+            } else {
+                console.warn('PayPal SDK not loaded. Please check your client ID.');
+            }
+        });
+    </script>
+</body>
+</html>

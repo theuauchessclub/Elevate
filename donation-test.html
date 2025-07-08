@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Donation Flow - The Up And Up Chess Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Test Donation Database Connection</h1>
+        
+        <div class="space-y-4">
+            <button id="test-insert" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+                Test Insert Donation
+            </button>
+            
+            <button id="test-fetch" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium">
+                Fetch All Donations
+            </button>
+            
+            <button id="clear-donations" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium">
+                Clear Test Donations
+            </button>
+        </div>
+        
+        <div id="results" class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-bold text-gray-900 mb-2">Results:</h3>
+            <div id="output" class="text-sm text-gray-700 whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+        
+        document.getElementById('test-insert').addEventListener('click', async () => {
+            log('Testing donation insert...');
+            
+            const testDonation = {
+                tier: 'knight',
+                amount: 100,
+                donor_name: 'Test User',
+                donor_email: 'test@example.com',
+                notes: 'Test donation from website',
+                payment_status: 'completed',
+                paypal_transaction_id: 'TEST_' + Date.now()
+            };
+            
+            try {
+                const { data, error } = await supabase
+                    .from('donations')
+                    .insert([testDonation])
+                    .select();
+                
+                if (error) {
+                    log('❌ Error: ' + JSON.stringify(error, null, 2));
+                } else {
+                    log('✅ Success: ' + JSON.stringify(data, null, 2));
+                }
+            } catch (err) {
+                log('❌ Exception: ' + err.message);
+            }
+        });
+        
+        document.getElementById('test-fetch').addEventListener('click', async () => {
+            log('Fetching all donations...');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('donations')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    log('❌ Error: ' + JSON.stringify(error, null, 2));
+                } else {
+                    log(`✅ Found ${data.length} donations:`);
+                    data.forEach((donation, index) => {
+                        log(`${index + 1}. ${donation.donor_name} - $${donation.amount} (${donation.tier}) - ${donation.payment_status}`);
+                    });
+                }
+            } catch (err) {
+                log('❌ Exception: ' + err.message);
+            }
+        });
+        
+        document.getElementById('clear-donations').addEventListener('click', async () => {
+            log('Clearing test donations...');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('donations')
+                    .delete()
+                    .like('paypal_transaction_id', 'TEST_%');
+                
+                if (error) {
+                    log('❌ Error: ' + JSON.stringify(error, null, 2));
+                } else {
+                    log('✅ Test donations cleared');
+                }
+            } catch (err) {
+                log('❌ Exception: ' + err.message);
+            }
+        });
+        
+        // Auto-fetch on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded. Testing connection...');
+            document.getElementById('test-fetch').click();
+        });
+    </script>
+</body>
+</html>

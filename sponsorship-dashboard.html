@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sponsorship Dashboard - The Up And Up Chess Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .font-display { font-family: 'Playfair Display', serif; }
+        
+        .metric-card {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+        
+        .donation-row {
+            transition: all 0.2s ease;
+        }
+        
+        .donation-row:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .animated-gradient {
+            background: linear-gradient(-45deg, #10b981, #0ea5e9, #6366f1, #8b5cf6);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .donor-avatar {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            font-weight: bold;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            min-width: 10rem;
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.5rem;
+            z-index: 50;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 18px;
+            height: 18px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Password Protection Modal -->
+    <div id="password-modal" class="fixed inset-0 bg-slate-900 bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate__animated animate__fadeInUp">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 animated-gradient rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-3xl">
+                    <i class="fas fa-chess-knight"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2 font-display">Dashboard Access</h2>
+                <p class="text-gray-600">Enter password to view the donation dashboard</p>
+            </div>
+            
+            <form id="password-form" class="mt-8">
+                <div class="mb-6">
+                    <input type="password" id="dashboard-password" placeholder="Enter password" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center text-lg font-medium">
+                </div>
+                
+                <button type="submit" 
+                    class="w-full animated-gradient hover:opacity-90 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center">
+                    <i class="fas fa-unlock mr-2"></i>
+                    Access Dashboard
+                </button>
+                
+                <div id="password-error" class="hidden mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-3 mt-0.5"></i>
+                        <div>
+                            <p class="font-medium">Incorrect password</p>
+                            <p class="mt-1">Please check your password and try again.</p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="mt-8 text-center">
+                <a href="index.html" class="text-gray-500 hover:text-gray-700 text-sm flex items-center justify-center">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Return to website
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Layout -->
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <div class="hidden md:flex md:flex-col w-64 bg-slate-800 text-white">
+            <div class="p-6 flex items-center space-x-3">
+                <div class="w-10 h-10 animated-gradient rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chess-knight text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-lg">Up And Up</h1>
+                    <p class="text-slate-400 text-xs">Chess Club Dashboard</p>
+                </div>
+            </div>
+            
+            <nav class="mt-6 flex-1 px-4">
+                <div class="space-y-2">
+                    <a href="#" class="flex items-center px-4 py-3 text-white rounded-lg bg-indigo-600">
+                        <i class="fas fa-chart-line w-6"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#donations" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                        <i class="fas fa-donate w-6"></i>
+                        <span>Donations</span>
+                    </a>
+                    <a href="#charts" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                        <i class="fas fa-chart-pie w-6"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
+                
+                <div class="mt-10">
+                    <h2 class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Management
+                    </h2>
+                    <div class="mt-3 space-y-2">
+                        <a href="#settings" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                            <i class="fas fa-cog w-6"></i>
+                            <span>Settings</span>
+                        </a>
+                        <a href="index.html" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                            <i class="fas fa-home w-6"></i>
+                            <span>Back to Site</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
+                        <span class="font-bold text-white">TH</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium">Truth Hall</p>
+                        <p class="text-xs text-slate-400">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+                <div class="flex justify-between items-center px-6 py-4">
+                    <!-- Mobile Menu Button -->
+                    <button id="mobile-menu-button" class="md:hidden text-gray-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div class="md:hidden flex items-center space-x-3">
+                        <div class="w-8 h-8 animated-gradient rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chess-knight text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-display font-bold text-sm">UAUC Dashboard</h1>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar - Desktop -->
+                    <div class="hidden md:flex flex-1 max-w-xl px-4">
+                        <div class="relative w-full">
+                            <input type="text" placeholder="Search donations or donors..." 
+                                class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <div class="absolute left-3 top-2.5 text-gray-400">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side Actions -->
+                    <div class="flex items-center space-x-4">
+                        <button id="refresh-btn" class="text-gray-600 hover:text-gray-900 relative">
+                            <i class="fas fa-sync-alt text-xl"></i>
+                        </button>
+                        
+                        <div class="dropdown relative">
+                            <button class="text-gray-600 hover:text-gray-900 relative">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span id="notification-badge" class="notification-badge hidden">3</span>
+                            </button>
+                            <div class="dropdown-content">
+                                <div class="py-2 px-4 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-900">Notifications</h3>
+                                </div>
+                                <div id="notification-items" class="max-h-64 overflow-y-auto">
+                                    <div class="py-3 px-4 border-b border-gray-200 hover:bg-gray-50">
+                                        <p class="text-sm font-medium text-gray-900">New donation received</p>
+                                        <p class="text-xs text-gray-500 mt-1">$100 from John Doe</p>
+                                    </div>
+                                </div>
+                                <div class="py-2 px-4 text-center">
+                                    <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                        View all notifications
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="index.html" class="hidden md:block text-indigo-600 hover:text-indigo-800 font-medium">
+                            <i class="fas fa-home mr-2"></i>
+                            Back to Site
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Mobile Menu -->
+                <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200">
+                    <div class="px-4 py-3">
+                        <div class="relative">
+                            <input type="text" placeholder="Search..." 
+                                class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <div class="absolute left-3 top-2.5 text-gray-400">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <nav class="px-4 py-2 space-y-1">
+                        <a href="#" class="block px-4 py-2 rounded-md bg-indigo-50 text-indigo-700 font-medium">Dashboard</a>
+                        <a href="#donations" class="block px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">Donations</a>
+                        <a href="#charts" class="block px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">Analytics</a>
+                        <a href="#settings" class="block px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">Settings</a>
+                        <a href="index.html" class="block px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">Back to Site</a>
+                    </nav>
+                </div>
+            </header>
+            
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                <!-- Loading State -->
+                <div id="loading-state" class="flex flex-col items-center justify-center h-full">
+                    <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full loading-spinner mb-4"></div>
+                    <p class="text-gray-600 font-medium">Loading dashboard data...</p>
+                    <p class="text-gray-500 text-sm mt-2">Please wait while we fetch the latest information</p>
+                </div>
+
+                <!-- Dashboard Content -->
+                <div id="dashboard-content" class="hidden space-y-8">
+                    <!-- Welcome Section -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900 font-display">Welcome to the Donation Dashboard</h1>
+                                <p class="text-gray-600 mt-1">Track and manage donations for The Up And Up Chess Club</p>
+                            </div>
+                            <div class="mt-4 md:mt-0">
+                                <div class="flex items-center space-x-2 text-gray-500 text-sm">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Last updated: <span id="last-updated">Just now</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Total Donations -->
+                        <div class="metric-card bg-white rounded-2xl shadow-sm p-6 border border-gray-100 relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Total Donations</p>
+                                    <p id="total-amount" class="text-3xl font-bold text-gray-900">$0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span id="total-count" class="text-green-600 font-medium">0 donations</span>
+                            </div>
+                            <div id="total-trend" class="absolute bottom-6 right-6 text-green-600">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span class="text-xs font-semibold">12%</span>
+                            </div>
+                        </div>
+
+                        <!-- This Month -->
+                        <div class="metric-card bg-white rounded-2xl shadow-sm p-6 border border-gray-100 relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">This Month</p>
+                                    <p id="month-amount" class="text-3xl font-bold text-gray-900">$0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span id="month-count" class="text-blue-600 font-medium">0 donations</span>
+                            </div>
+                            <div id="month-trend" class="absolute bottom-6 right-6 text-blue-600">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span class="text-xs font-semibold">8%</span>
+                            </div>
+                        </div>
+
+                        <!-- Average Donation -->
+                        <div class="metric-card bg-white rounded-2xl shadow-sm p-6 border border-gray-100 relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Average Donation</p>
+                                    <p id="average-amount" class="text-3xl font-bold text-gray-900">$0</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-purple-600 font-medium">Per donation</span>
+                            </div>
+                        </div>
+
+                        <!-- Top Tier -->
+                        <div class="metric-card bg-white rounded-2xl shadow-sm p-6 border border-gray-100 relative">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm font-medium">Most Popular Tier</p>
+                                    <p id="top-tier" class="text-3xl font-bold text-gray-900">-</p>
+                                </div>
+                                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-crown text-amber-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <span id="top-tier-count" class="text-amber-600 font-medium">0 donations</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Donation Trends Chart -->
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-gray-900">
+                                    <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+                                    Donation Trends
+                                </h3>
+                                <div class="flex items-center space-x-2">
+                                    <select id="trend-timeframe" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <option value="week">Last 7 days</option>
+                                        <option value="month" selected>Last 30 days</option>
+                                        <option value="year">This year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="trends-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Donation Distribution Chart -->
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-gray-900">
+                                    <i class="fas fa-chart-pie mr-2 text-indigo-600"></i>
+                                    Donation Distribution
+                                </h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="distribution-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tier Breakdown -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6">
+                            <i class="fas fa-chess mr-2 text-indigo-600"></i>
+                            Donations by Tier
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- Pawn Tier -->
+                            <div class="bg-white rounded-xl border border-amber-200 overflow-hidden shadow-sm">
+                                <div class="bg-amber-50 px-6 py-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-chess-pawn text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900">Pawn Supporter</h4>
+                                            <p class="text-amber-700 text-sm">$50 donation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="px-6 py-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-amber-600" id="pawn-amount">$0</p>
+                                            <p class="text-sm text-gray-600" id="pawn-count">0 donations</p>
+                                        </div>
+                                        <div class="text-amber-600">
+                                            <i class="fas fa-caret-up mr-1"></i>
+                                            <span class="text-xs font-semibold">5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Knight Tier -->
+                            <div class="bg-white rounded-xl border border-emerald-200 overflow-hidden shadow-sm">
+                                <div class="bg-emerald-50 px-6 py-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-chess-knight text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900">Knight Supporter</h4>
+                                            <p class="text-emerald-700 text-sm">$100 donation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="px-6 py-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-emerald-600" id="knight-amount">$0</p>
+                                            <p class="text-sm text-gray-600" id="knight-count">0 donations</p>
+                                        </div>
+                                        <div class="text-emerald-600">
+                                            <i class="fas fa-caret-up mr-1"></i>
+                                            <span class="text-xs font-semibold">12%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bishop Tier -->
+                            <div class="bg-white rounded-xl border border-purple-200 overflow-hidden shadow-sm">
+                                <div class="bg-purple-50 px-6 py-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-chess-bishop text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900">Bishop Benefactor</h4>
+                                            <p class="text-purple-700 text-sm">$250 donation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="px-6 py-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-purple-600" id="bishop-amount">$0</p>
+                                            <p class="text-sm text-gray-600" id="bishop-count">0 donations</p>
+                                        </div>
+                                        <div class="text-purple-600">
+                                            <i class="fas fa-caret-up mr-1"></i>
+                                            <span class="text-xs font-semibold">8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Tier -->
+                            <div class="bg-white rounded-xl border border-rose-200 overflow-hidden shadow-sm">
+                                <div class="bg-rose-50 px-6 py-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-rose-500 rounded-xl flex items-center justify-center">
+                                            <i class="fas fa-heart text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900">Custom Donation</h4>
+                                            <p class="text-rose-700 text-sm">Flexible amount</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="px-6 py-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-rose-600" id="custom-amount">$0</p>
+                                            <p class="text-sm text-gray-600" id="custom-count">0 donations</p>
+                                        </div>
+                                        <div class="text-rose-600">
+                                            <i class="fas fa-caret-up mr-1"></i>
+                                            <span class="text-xs font-semibold">15%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Donations -->
+                    <div id="donations" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                                <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                                    <i class="fas fa-history mr-2 text-indigo-600"></i>
+                                    Recent Donations
+                                </h3>
+                                <div class="mt-3 md:mt-0 flex flex-wrap items-center gap-2">
+                                    <select id="filter-status" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <option value="all">All Status</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="failed">Failed</option>
+                                    </select>
+                                    
+                                    <select id="filter-tier" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <option value="all">All Tiers</option>
+                                        <option value="pawn">Pawn</option>
+                                        <option value="knight">Knight</option>
+                                        <option value="bishop">Bishop</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                    
+                                    <button id="export-donations" class="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                        <i class="fas fa-download mr-1"></i>
+                                        Export
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Donor</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="donations-table" class="bg-white divide-y divide-gray-200">
+                                    <!-- Donations will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="no-donations" class="hidden text-center py-12">
+                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-600 mb-2">No donations yet</p>
+                            <p class="text-gray-500 text-sm">Start promoting your sponsorship program!</p>
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between text-sm text-gray-600">
+                                <div>
+                                    Showing <span id="showing-count">0</span> of <span id="total-records">0</span> donations
+                                </div>
+                                <div class="mt-3 md:mt-0 flex items-center space-x-2">
+                                    <button id="prev-page" class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <span id="page-info">Page 1</span>
+                                    <button id="next-page" class="px-3 py-1 rounded border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div id="error-state" class="hidden flex flex-col items-center justify-center h-full">
+                    <div class="text-red-500 text-6xl mb-4">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Failed to load dashboard data</h3>
+                    <p class="text-gray-600 mb-6 text-center max-w-md">
+                        There was a problem connecting to the database. Please check your connection and try again.
+                    </p>
+                    <button onclick="loadDashboard()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Try Again
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Donation Detail Modal -->
+    <div id="donation-detail-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900">Donation Details</h3>
+                    <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="donation-detail-content">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="p-6 border-t border-gray-200 bg-gray-50">
+                <div class="flex justify-end space-x-3">
+                    <button id="close-detail-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Close
+                    </button>
+                    <button id="send-email-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <i class="fas fa-envelope mr-2"></i>
+                        Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Email Modal -->
+    <div id="send-email-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-900">Send Confirmation Email</h3>
+                    <button id="close-email-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="email-form">
+                    <div class="mb-4">
+                        <label for="email-to" class="block text-sm font-medium text-gray-700 mb-1">Recipient</label>
+                        <input type="email" id="email-to" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" readonly>
+                    </div>
+                    <div class="mb-4">
+                        <label for="email-subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                        <input type="text" id="email-subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" value="Your Donation Receipt from The Up And Up Chess Club" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Template</label>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center mb-2">
+                                <div class="w-6 h-6 bg-indigo-100 rounded flex items-center justify-center mr-2">
+                                    <i class="fas fa-envelope text-indigo-600 text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">Official Donation Receipt</span>
+                            </div>
+                            <p class="text-sm text-gray-500">A beautifully designed email with donation receipt and tax deduction information.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    This will send an official tax-deductible receipt to the donor using our confirmation email template.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="p-6 border-t border-gray-200 bg-gray-50">
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-email-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button id="confirm-send-email-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Success Notification -->
+    <div id="email-success-notification" class="hidden fixed bottom-4 right-4 bg-white rounded-lg shadow-lg border-l-4 border-green-500 px-4 py-3 max-w-sm">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-check-circle text-green-500 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900">Email Sent Successfully</p>
+                <p class="text-sm text-gray-600 mt-1">Confirmation email has been sent to the donor.</p>
+            </div>
+            <button class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg p-1.5" onclick="document.getElementById('email-success-notification').classList.add('hidden')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Chart instances
+        let trendsChart = null;
+        let distributionChart = null;
+
+        // Tier configuration
+        const tierConfig = {
+            pawn: { name: 'Pawn Supporter', icon: 'fas fa-chess-pawn', color: 'amber' },
+            knight: { name: 'Knight Supporter', icon: 'fas fa-chess-knight', color: 'emerald' },
+            bishop: { name: 'Bishop Benefactor', icon: 'fas fa-chess-bishop', color: 'purple' },
+            custom: { name: 'Custom Donation', icon: 'fas fa-heart', color: 'rose' }
+        };
+
+        // Pagination state
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalPages = 1;
+        let allDonations = [];
+        let filteredDonations = [];
+
+        // Filter state
+        let currentStatusFilter = 'all';
+        let currentTierFilter = 'all';
+
+        // Selected donation for detail view
+        let selectedDonation = null;
+
+        async function loadDashboard() {
+            try {
+                showLoading();
+                
+                // Fetch all donations
+                const { data: donations, error } = await supabase
+                    .from('donations')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allDonations = donations;
+                filteredDonations = [...donations];
+                
+                updateSummaryCards(donations);
+                updateTierBreakdown(donations);
+                updateDonationsTable();
+                initializeCharts(donations);
+                
+                // Update last updated time
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                
+                showDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showError();
+            }
+        }
+
+        function updateSummaryCards(donations) {
+            const totalAmount = donations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            const monthlyDonations = donations.filter(d => {
+                const donationDate = new Date(d.created_at);
+                return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+            });
+            
+            const monthlyAmount = monthlyDonations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+            const averageAmount = donations.length ? totalAmount / donations.length : 0;
+            
+            // Find most popular tier
+            const tierCounts = {};
+            donations.forEach(d => {
+                tierCounts[d.tier] = (tierCounts[d.tier] || 0) + 1;
+            });
+            
+            const topTier = Object.keys(tierCounts).reduce((a, b) => 
+                tierCounts[a] > tierCounts[b] ? a : b, 'custom');
+
+            document.getElementById('total-amount').textContent = `$${totalAmount.toLocaleString()}`;
+            document.getElementById('total-count').textContent = `${donations.length} donation${donations.length !== 1 ? 's' : ''}`;
+            document.getElementById('month-amount').textContent = `$${monthlyAmount.toLocaleString()}`;
+            document.getElementById('month-count').textContent = `${monthlyDonations.length} donation${monthlyDonations.length !== 1 ? 's' : ''}`;
+            document.getElementById('average-amount').textContent = `$${averageAmount.toFixed(0)}`;
+            document.getElementById('top-tier').textContent = tierConfig[topTier]?.name || 'None';
+            document.getElementById('top-tier-count').textContent = `${tierCounts[topTier] || 0} donation${tierCounts[topTier] !== 1 ? 's' : ''}`;
+            
+            // Show/hide trend indicators based on data availability
+            if (donations.length === 0) {
+                document.getElementById('total-trend').classList.add('hidden');
+                document.getElementById('month-trend').classList.add('hidden');
+            } else {
+                document.getElementById('total-trend').classList.remove('hidden');
+                document.getElementById('month-trend').classList.remove('hidden');
+            }
+        }
+
+        function updateTierBreakdown(donations) {
+            const tierTotals = {
+                pawn: { amount: 0, count: 0 },
+                knight: { amount: 0, count: 0 },
+                bishop: { amount: 0, count: 0 },
+                custom: { amount: 0, count: 0 }
+            };
+
+            donations.forEach(d => {
+                if (tierTotals[d.tier]) {
+                    tierTotals[d.tier].amount += parseFloat(d.amount);
+                    tierTotals[d.tier].count += 1;
+                }
+            });
+
+            Object.keys(tierTotals).forEach(tier => {
+                const total = tierTotals[tier];
+                document.getElementById(`${tier}-amount`).textContent = `$${total.amount.toLocaleString()}`;
+                document.getElementById(`${tier}-count`).textContent = `${total.count} donation${total.count !== 1 ? 's' : ''}`;
+            });
+        }
+
+        function updateDonationsTable() {
+            const tableBody = document.getElementById('donations-table');
+            const noDonations = document.getElementById('no-donations');
+            
+            // Apply filters
+            let filtered = allDonations;
+            
+            if (currentStatusFilter !== 'all') {
+                filtered = filtered.filter(d => d.payment_status === currentStatusFilter);
+            }
+            
+            if (currentTierFilter !== 'all') {
+                filtered = filtered.filter(d => d.tier === currentTierFilter);
+            }
+            
+            filteredDonations = filtered;
+            totalPages = Math.ceil(filteredDonations.length / pageSize);
+            
+            // Update pagination controls
+            document.getElementById('prev-page').disabled = currentPage === 1;
+            document.getElementById('next-page').disabled = currentPage >= totalPages;
+            document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            document.getElementById('showing-count').textContent = filteredDonations.length > 0 
+                ? `${Math.min((currentPage - 1) * pageSize + 1, filteredDonations.length)}-${Math.min(currentPage * pageSize, filteredDonations.length)}`
+                : '0';
+            document.getElementById('total-records').textContent = filteredDonations.length;
+            
+            if (filteredDonations.length === 0) {
+                tableBody.innerHTML = '';
+                noDonations.classList.remove('hidden');
+                return;
+            }
+            
+            noDonations.classList.add('hidden');
+            
+            // Paginate donations
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, filteredDonations.length);
+            const paginated = filteredDonations.slice(start, end);
+            
+            tableBody.innerHTML = paginated.map(donation => {
+                const tierInfo = tierConfig[donation.tier];
+                const date = new Date(donation.created_at).toLocaleDateString();
+                let statusColor = 'gray';
+                
+                switch (donation.payment_status) {
+                    case 'completed':
+                        statusColor = 'green';
+                        break;
+                    case 'pending':
+                        statusColor = 'yellow';
+                        break;
+                    case 'failed':
+                        statusColor = 'red';
+                        break;
+                }
+                
+                // Create donor initials for avatar
+                const nameParts = (donation.donor_name || 'Anonymous').split(' ');
+                const initials = nameParts.length > 1 
+                    ? `${nameParts[0][0]}${nameParts[1][0]}`
+                    : nameParts[0][0];
+                
+                return `
+                    <tr class="donation-row hover:bg-gray-50 cursor-pointer" data-id="${donation.id}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="donor-avatar mr-3">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">${donation.donor_name || 'Anonymous'}</div>
+                                    ${donation.donor_email ? `<div class="text-xs text-gray-500 truncate max-w-[150px]">${donation.donor_email}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <i class="${tierInfo.icon} text-${tierInfo.color}-600 mr-2"></i>
+                                <span class="text-sm text-gray-900">${tierInfo.name}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            $${parseFloat(donation.amount).toLocaleString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">
+                                ${donation.payment_status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${date}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <button class="text-indigo-600 hover:text-indigo-900 view-details-btn" data-id="${donation.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${donation.donor_email ? 
+                                `<button class="ml-3 text-indigo-600 hover:text-indigo-900 send-email-btn" data-id="${donation.id}">
+                                    <i class="fas fa-envelope"></i>
+                                </button>` : 
+                                ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add event listeners to rows and buttons
+            document.querySelectorAll('.donation-row').forEach(row => {
+                row.addEventListener('click', function(e) {
+                    if (!e.target.closest('button')) {
+                        const id = this.dataset.id;
+                        openDonationDetail(id);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.view-details-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    openDonationDetail(id);
+                });
+            });
+            
+            document.querySelectorAll('.send-email-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    openSendEmailModal(id);
+                });
+            });
+        }
+
+        function initializeCharts(donations) {
+            initTrendsChart(donations);
+            initDistributionChart(donations);
+        }
+
+        function initTrendsChart(donations) {
+            const ctx = document.getElementById('trends-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (trendsChart) {
+                trendsChart.destroy();
+            }
+            
+            // Process data for last 30 days
+            const days = 30;
+            const labels = [];
+            const data = [];
+            
+            // Create date for each day and initialize with 0
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                data.push(0);
+            }
+            
+            // Fill in actual donation amounts by day
+            donations.forEach(donation => {
+                const donationDate = new Date(donation.created_at);
+                const today = new Date();
+                const timeDiff = today.getTime() - donationDate.getTime();
+                const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                
+                if (dayDiff < days) {
+                    data[days - 1 - dayDiff] += parseFloat(donation.amount);
+                }
+            });
+            
+            trendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Donation Amount',
+                        data: data,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#6366f1',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `$${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update chart when timeframe changes
+            document.getElementById('trend-timeframe').addEventListener('change', function() {
+                updateTrendsChart(donations, this.value);
+            });
+        }
+
+        function updateTrendsChart(donations, timeframe) {
+            let days;
+            let format;
+            
+            switch (timeframe) {
+                case 'week':
+                    days = 7;
+                    format = { weekday: 'short' };
+                    break;
+                case 'month':
+                    days = 30;
+                    format = { month: 'short', day: 'numeric' };
+                    break;
+                case 'year':
+                    days = 365;
+                    format = { month: 'short' };
+                    break;
+                default:
+                    days = 30;
+                    format = { month: 'short', day: 'numeric' };
+            }
+            
+            const labels = [];
+            const data = [];
+            
+            if (timeframe === 'year') {
+                // Group by month for year view
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthData = Array(12).fill(0);
+                
+                const currentYear = new Date().getFullYear();
+                
+                donations.forEach(donation => {
+                    const donationDate = new Date(donation.created_at);
+                    if (donationDate.getFullYear() === currentYear) {
+                        monthData[donationDate.getMonth()] += parseFloat(donation.amount);
+                    }
+                });
+                
+                trendsChart.data.labels = months;
+                trendsChart.data.datasets[0].data = monthData;
+            } else {
+                // Daily data for week or month
+                for (let i = days - 1; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString('en-US', format));
+                    data.push(0);
+                }
+                
+                donations.forEach(donation => {
+                    const donationDate = new Date(donation.created_at);
+                    const today = new Date();
+                    const timeDiff = today.getTime() - donationDate.getTime();
+                    const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                    
+                    if (dayDiff < days) {
+                        data[days - 1 - dayDiff] += parseFloat(donation.amount);
+                    }
+                });
+                
+                trendsChart.data.labels = labels;
+                trendsChart.data.datasets[0].data = data;
+            }
+            
+            trendsChart.update();
+        }
+
+        function initDistributionChart(donations) {
+            const ctx = document.getElementById('distribution-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (distributionChart) {
+                distributionChart.destroy();
+            }
+            
+            // Count donations by tier
+            const tierCounts = {
+                pawn: 0,
+                knight: 0,
+                bishop: 0,
+                custom: 0
+            };
+            
+            // Sum amounts by tier
+            const tierAmounts = {
+                pawn: 0,
+                knight: 0,
+                bishop: 0,
+                custom: 0
+            };
+            
+            donations.forEach(donation => {
+                tierCounts[donation.tier] = (tierCounts[donation.tier] || 0) + 1;
+                tierAmounts[donation.tier] = (tierAmounts[donation.tier] || 0) + parseFloat(donation.amount);
+            });
+            
+            const tierColors = {
+                pawn: '#f59e0b',
+                knight: '#10b981',
+                bishop: '#8b5cf6',
+                custom: '#f43f5e'
+            };
+            
+            distributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(tierConfig).map(tier => tierConfig[tier].name),
+                    datasets: [{
+                        data: Object.values(tierAmounts),
+                        backgroundColor: Object.values(tierColors),
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                boxWidth: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round(value / total * 100) : 0;
+                                    return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function openDonationDetail(id) {
+            selectedDonation = allDonations.find(d => d.id.toString() === id.toString());
+            
+            if (!selectedDonation) return;
+            
+            const modalContent = document.getElementById('donation-detail-content');
+            const modal = document.getElementById('donation-detail-modal');
+            
+            const tierInfo = tierConfig[selectedDonation.tier];
+            const date = new Date(selectedDonation.created_at).toLocaleDateString();
+            const time = new Date(selectedDonation.created_at).toLocaleTimeString();
+            let statusColor = 'gray';
+            
+            switch (selectedDonation.payment_status) {
+                case 'completed':
+                    statusColor = 'green';
+                    break;
+                case 'pending':
+                    statusColor = 'yellow';
+                    break;
+                case 'failed':
+                    statusColor = 'red';
+                    break;
+            }
+            
+            modalContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-${tierInfo.color}-100 rounded-xl flex items-center justify-center mr-4">
+                                <i class="${tierInfo.icon} text-${tierInfo.color}-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">${tierInfo.name}</h4>
+                                <p class="text-gray-500">Transaction ID: ${selectedDonation.paypal_transaction_id || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800">
+                                ${selectedDonation.payment_status}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row">
+                        <div class="md:w-1/2 mb-6 md:mb-0 md:pr-4">
+                            <h5 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Donor Information</h5>
+                            <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <div>
+                                    <p class="text-xs text-gray-500">Name</p>
+                                    <p class="text-sm font-medium text-gray-900">${selectedDonation.donor_name || 'Anonymous'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Email</p>
+                                    <p class="text-sm font-medium text-gray-900">${selectedDonation.donor_email || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">PayPal Payer ID</p>
+                                    <p class="text-sm font-medium text-gray-900">${selectedDonation.paypal_payer_id || 'Not available'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Notes</p>
+                                    <p class="text-sm font-medium text-gray-900">${selectedDonation.notes || 'No notes provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="md:w-1/2 md:pl-4">
+                            <h5 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Donation Details</h5>
+                            <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                                <div>
+                                    <p class="text-xs text-gray-500">Amount</p>
+                                    <p class="text-lg font-bold text-${tierInfo.color}-600">$${parseFloat(selectedDonation.amount).toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Date & Time</p>
+                                    <p class="text-sm font-medium text-gray-900">${date} at ${time}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Tier</p>
+                                    <p class="text-sm font-medium text-gray-900">${tierInfo.name}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Purpose</p>
+                                    <p class="text-sm font-medium text-gray-900">${selectedDonation.donation_purpose || 'General Support'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${selectedDonation.donor_email ? `
+                    <div class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-envelope text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-blue-700">
+                                    Email is available for this donor. You can send a confirmation receipt by clicking the "Send Email" button below.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-gray-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-gray-700">
+                                    No email address provided. Cannot send confirmation receipt.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    `}
+                </div>
+            `;
+            
+            // Update email button visibility
+            const emailButton = document.getElementById('send-email-btn');
+            if (selectedDonation.donor_email) {
+                emailButton.classList.remove('hidden');
+            } else {
+                emailButton.classList.add('hidden');
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function openSendEmailModal(id) {
+            selectedDonation = allDonations.find(d => d.id.toString() === id.toString());
+            
+            if (!selectedDonation || !selectedDonation.donor_email) return;
+            
+            document.getElementById('email-to').value = selectedDonation.donor_email;
+            document.getElementById('send-email-modal').classList.remove('hidden');
+        }
+
+        function showLoading() {
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('dashboard-content').classList.add('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+        }
+
+        function showError() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
+
+        // Send confirmation email
+        async function sendConfirmationEmail(donationData) {
+            try {
+                const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
+                    body: {
+                        donor_email: donationData.donor_email,
+                        donor_name: donationData.donor_name,
+                        amount: donationData.amount,
+                        transaction_id: donationData.paypal_transaction_id,
+                        donation_date: new Date(donationData.created_at).toLocaleDateString(),
+                        donation_id: donationData.id
+                    }
+                });
+                
+                if (error) {
+                    console.error('Error sending email:', error);
+                    return false;
+                }
+                
+                console.log('Email sent successfully:', data);
+                return true;
+            } catch (error) {
+                console.error('Exception sending email:', error);
+                return false;
+            }
+        }
+
+        // Real-time updates
+        function setupRealtimeUpdates() {
+            const channel = supabase
+                .channel('donations')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'donations' }, 
+                    (payload) => {
+                        console.log('Real-time update:', payload);
+                        
+                        // Show notification badge
+                        document.getElementById('notification-badge').classList.remove('hidden');
+                        
+                        // Add notification to dropdown
+                        const container = document.getElementById('notification-items');
+                        const notification = document.createElement('div');
+                        notification.className = 'py-3 px-4 border-b border-gray-200 hover:bg-gray-50';
+                        
+                        // Create appropriate message based on event type
+                        let message = '';
+                        if (payload.eventType === 'INSERT') {
+                            const amount = payload.new.amount || 0;
+                            const donor = payload.new.donor_name || 'Anonymous';
+                            message = `New $${amount} donation from ${donor}`;
+                        } else if (payload.eventType === 'UPDATE') {
+                            message = 'Donation record updated';
+                        } else if (payload.eventType === 'DELETE') {
+                            message = 'Donation record deleted';
+                        }
+                        
+                        notification.innerHTML = `
+                            <p class="text-sm font-medium text-gray-900">${message}</p>
+                            <p class="text-xs text-gray-500 mt-1">Just now</p>
+                        `;
+                        
+                        container.prepend(notification);
+                        
+                        // Refresh dashboard
+                        loadDashboard();
+                    }
+                )
+                .subscribe();
+        }
+        
+        // Export donations to CSV
+        function exportDonationsToCsv() {
+            const data = filteredDonations;
+            
+            if (data.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            // Define CSV headers
+            const headers = [
+                'ID',
+                'Date',
+                'Donor Name',
+                'Donor Email',
+                'Amount',
+                'Tier',
+                'Status',
+                'Transaction ID',
+                'Notes'
+            ];
+            
+            // Transform data to CSV rows
+            const rows = data.map(d => [
+                d.id,
+                new Date(d.created_at).toLocaleString(),
+                d.donor_name || 'Anonymous',
+                d.donor_email || '',
+                d.amount,
+                tierConfig[d.tier]?.name || d.tier,
+                d.payment_status,
+                d.paypal_transaction_id || '',
+                d.notes || ''
+            ]);
+            
+            // Combine headers and rows
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => 
+                    typeof cell === 'string' ? `"${cell.replace(/"/g, '""')}"` : cell
+                ).join(','))
+            ].join('\n');
+            
+            // Create and download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `donations_export_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show password modal on load
+            document.getElementById('password-modal').style.display = 'flex';
+            
+            // Handle password form submission
+            document.getElementById('password-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                checkPassword();
+            });
+
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-button').addEventListener('click', () => {
+                document.getElementById('mobile-menu').classList.toggle('hidden');
+            });
+
+            // Filter changes
+            document.getElementById('filter-status').addEventListener('change', function() {
+                currentStatusFilter = this.value;
+                currentPage = 1;
+                updateDonationsTable();
+            });
+            
+            document.getElementById('filter-tier').addEventListener('change', function() {
+                currentTierFilter = this.value;
+                currentPage = 1;
+                updateDonationsTable();
+            });
+            
+            // Pagination
+            document.getElementById('prev-page').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateDonationsTable();
+                }
+            });
+            
+            document.getElementById('next-page').addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateDonationsTable();
+                }
+            });
+            
+            // Detail modal close buttons
+            document.getElementById('close-modal').addEventListener('click', function() {
+                document.getElementById('donation-detail-modal').classList.add('hidden');
+            });
+            
+            document.getElementById('close-detail-btn').addEventListener('click', function() {
+                document.getElementById('donation-detail-modal').classList.add('hidden');
+            });
+            
+            // Email modal
+            document.getElementById('send-email-btn').addEventListener('click', function() {
+                if (selectedDonation && selectedDonation.donor_email) {
+                    openSendEmailModal(selectedDonation.id);
+                }
+            });
+            
+            document.getElementById('close-email-modal').addEventListener('click', function() {
+                document.getElementById('send-email-modal').classList.add('hidden');
+            });
+            
+            document.getElementById('cancel-email-btn').addEventListener('click', function() {
+                document.getElementById('send-email-modal').classList.add('hidden');
+            });
+            
+            document.getElementById('confirm-send-email-btn').addEventListener('click', async function() {
+                if (selectedDonation && selectedDonation.donor_email) {
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+                    
+                    const success = await sendConfirmationEmail(selectedDonation);
+                    
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Send Email';
+                    
+                    document.getElementById('send-email-modal').classList.add('hidden');
+                    
+                    if (success) {
+                        document.getElementById('email-success-notification').classList.remove('hidden');
+                        setTimeout(() => {
+                            document.getElementById('email-success-notification').classList.add('hidden');
+                        }, 5000);
+                    } else {
+                        alert('Failed to send email. Please try again.');
+                    }
+                }
+            });
+            
+            // Export button
+            document.getElementById('export-donations').addEventListener('click', exportDonationsToCsv);
+            
+            // Refresh button
+            document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
+        });
+
+        // Password protection
+        const DASHBOARD_PASSWORD = 'godbody'; // Change this to your desired password
+        let isAuthenticated = false;
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('dashboard-password').value;
+            if (enteredPassword === DASHBOARD_PASSWORD) {
+                isAuthenticated = true;
+                document.getElementById('password-modal').style.display = 'none';
+                document.getElementById('password-error').classList.add('hidden');
+                loadDashboard();
+                setupRealtimeUpdates();
+                setInterval(loadDashboard, 300000); // Refresh every 5 minutes
+                return true;
+            } else {
+                document.getElementById('password-error').classList.remove('hidden');
+                document.getElementById('dashboard-password').value = '';
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>

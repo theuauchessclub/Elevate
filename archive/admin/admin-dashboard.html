@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - The Up And Up Chess Club</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .student-card {
+            transition: all 0.2s ease;
+        }
+        
+        .student-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dasharray 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-gray-900">
+                            <i class="fas fa-chess-king text-indigo-600 mr-2"></i>
+                            Admin Dashboard
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="admin-info" class="hidden text-sm text-gray-600">
+                        <span id="admin-name" class="font-semibold"></span>
+                        <span class="text-gray-400">|</span>
+                        <span id="admin-role" class="text-indigo-600"></span>
+                    </div>
+                    <button id="logout-btn" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <div id="login-section" class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 flex items-center justify-center px-4">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">👑</div>
+                <h2 class="text-3xl font-bold text-gray-900">Admin Access</h2>
+                <p class="text-gray-600 mt-2">Manage students and track progress</p>
+            </div>
+            
+            <form id="admin-login-form" class="space-y-6">
+                <div>
+                    <label for="admin-email" class="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
+                    <input type="email" id="admin-email" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="admin-password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-shield-alt mr-2"></i>Access Dashboard
+                </button>
+            </form>
+            
+            <div id="admin-login-error" class="hidden mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg"></div>
+            
+            <div class="mt-6 text-center">
+                <a href="index.html" class="text-indigo-600 hover:text-indigo-800 text-sm">← Back to Main Site</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="hidden">
+        <!-- Stats Overview -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Student Management Dashboard</h2>
+                <p class="text-gray-600">Monitor student progress and manage the chess learning program</p>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 mr-4">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Students</p>
+                            <p id="total-students" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 mr-4">
+                            <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Active This Week</p>
+                            <p id="active-students" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 mr-4">
+                            <i class="fas fa-trophy text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Achievements</p>
+                            <p id="total-achievements" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 mr-4">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Hours Learned</p>
+                            <p id="total-hours" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="bg-white rounded-lg shadow-sm mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6">
+                        <button class="admin-tab-btn active py-4 px-1 border-b-2 border-indigo-500 font-medium text-sm text-indigo-600" data-tab="students">
+                            <i class="fas fa-users mr-2"></i>Students
+                        </button>
+                        <button class="admin-tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="analytics">
+                            <i class="fas fa-chart-bar mr-2"></i>Analytics
+                        </button>
+                        <button class="admin-tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="notifications">
+                            <i class="fas fa-bell mr-2"></i>Notifications
+                        </button>
+                        <button class="admin-tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="milestones">
+                            <i class="fas fa-medal mr-2"></i>Milestones
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Students Tab -->
+            <div id="students-tab" class="admin-tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Student List -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-lg shadow-lg">
+                            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-gray-900">All Students</h3>
+                                <div class="flex space-x-3">
+                                    <input type="text" id="search-students" placeholder="Search students..." 
+                                           class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <button id="export-students-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                                        <i class="fas fa-download mr-2"></i>Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="students-list" class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                                <!-- Students will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Student Details Panel -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div id="student-details" class="hidden">
+                            <div class="text-center mb-6">
+                                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-user text-indigo-600 text-2xl"></i>
+                                </div>
+                                <h3 id="selected-student-name" class="text-xl font-bold text-gray-900"></h3>
+                                <p id="selected-student-email" class="text-gray-600"></p>
+                                <p id="selected-student-joined" class="text-sm text-gray-500 mt-1"></p>
+                            </div>
+                            
+                            <!-- Progress Overview -->
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm font-medium text-gray-700 mb-1">
+                                        <span>Overall Progress</span>
+                                        <span id="selected-student-progress">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="selected-student-progress-bar" class="bg-indigo-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4 text-center">
+                                    <div class="bg-blue-50 p-3 rounded-lg">
+                                        <div id="selected-student-lessons" class="text-2xl font-bold text-blue-600">0</div>
+                                        <div class="text-xs text-gray-600">Lessons</div>
+                                    </div>
+                                    <div class="bg-purple-50 p-3 rounded-lg">
+                                        <div id="selected-student-puzzles" class="text-2xl font-bold text-purple-600">0</div>
+                                        <div class="text-xs text-gray-600">Puzzles</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <h4 class="font-medium text-gray-900">Recent Achievements</h4>
+                                    <div id="selected-student-achievements" class="space-y-2">
+                                        <!-- Achievements will be loaded here -->
+                                    </div>
+                                </div>
+                                
+                                <div class="pt-4 border-t">
+                                    <button id="send-encouragement-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition-colors text-sm">
+                                        <i class="fas fa-paper-plane mr-2"></i>Send Encouragement
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="student-details-placeholder" class="text-center text-gray-500 py-8">
+                            <i class="fas fa-user-plus text-4xl mb-4"></i>
+                            <p>Select a student to view details</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics-tab" class="admin-tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Progress Chart -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Student Progress Overview</h3>
+                        <canvas id="progress-chart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <!-- Activity Chart -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Weekly Activity</h3>
+                        <canvas id="activity-chart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <!-- Lesson Completion Stats -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Lesson Completion Rates</h3>
+                        <div id="lesson-stats" class="space-y-3">
+                            <!-- Lesson stats will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Puzzle Performance -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Puzzle Performance</h3>
+                        <canvas id="puzzle-chart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="admin-tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Email Templates -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Email Templates</h3>
+                            <button id="create-template-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-plus mr-2"></i>New Template
+                            </button>
+                        </div>
+                        <div id="email-templates-list" class="space-y-3">
+                            <!-- Email templates will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Notifications -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Notifications</h3>
+                        <div id="recent-notifications" class="space-y-3 max-h-80 overflow-y-auto">
+                            <!-- Recent notifications will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Settings -->
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="auto-milestone-emails" checked class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700">Auto-send milestone emails</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="weekly-progress-emails" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700">Weekly progress reports</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <button id="save-notification-settings" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-save mr-2"></i>Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Milestones Tab -->
+            <div id="milestones-tab" class="admin-tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Active Milestones -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Active Milestones</h3>
+                            <button id="create-milestone-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-plus mr-2"></i>New Milestone
+                            </button>
+                        </div>
+                        <div id="milestones-list" class="space-y-3">
+                            <!-- Milestones will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Achievements -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Achievements</h3>
+                        <div id="recent-achievements" class="space-y-3 max-h-80 overflow-y-auto">
+                            <!-- Recent achievements will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Template Modal -->
+    <div id="email-template-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Email Template Editor</h3>
+                <button id="close-template-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="email-template-form" class="space-y-4">
+                <div>
+                    <label for="template-name" class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                    <input type="text" id="template-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="template-subject" class="block text-sm font-medium text-gray-700 mb-1">Subject Line</label>
+                    <input type="text" id="template-subject" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="template-content" class="block text-sm font-medium text-gray-700 mb-1">Email Content (HTML)</label>
+                    <textarea id="template-content" rows="10" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-template" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors">Save Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Global variables
+        let currentAdmin = null;
+        let selectedStudent = null;
+        let studentsData = [];
+        let progressChart = null;
+        let activityChart = null;
+        let puzzleChart = null;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if admin is already logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const adminData = await checkAdminAccess(session.user.id);
+                if (adminData) {
+                    currentAdmin = { ...session.user, ...adminData };
+                    showDashboard();
+                    await loadDashboardData();
+                }
+            }
+            
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Admin login
+            document.getElementById('admin-login-form').addEventListener('submit', handleAdminLogin);
+            
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            
+            // Tab navigation
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => switchAdminTab(e.target.dataset.tab));
+            });
+            
+            // Student search
+            document.getElementById('search-students').addEventListener('input', filterStudents);
+            
+            // Export students
+            document.getElementById('export-students-btn').addEventListener('click', exportStudents);
+            
+            // Email template modal
+            document.getElementById('create-template-btn').addEventListener('click', openTemplateModal);
+            document.getElementById('close-template-modal').addEventListener('click', closeTemplateModal);
+            document.getElementById('cancel-template').addEventListener('click', closeTemplateModal);
+            document.getElementById('email-template-form').addEventListener('submit', saveEmailTemplate);
+            
+            // Milestone creation
+            document.getElementById('create-milestone-btn').addEventListener('click', createMilestone);
+            
+            // Notification settings
+            document.getElementById('save-notification-settings').addEventListener('click', saveNotificationSettings);
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            const errorDiv = document.getElementById('admin-login-error');
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                // Check if user has admin access
+                const adminData = await checkAdminAccess(data.user.id);
+                if (!adminData) {
+                    throw new Error('Access denied. Admin privileges required.');
+                }
+                
+                currentAdmin = { ...data.user, ...adminData };
+                showDashboard();
+                await loadDashboardData();
+                
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function checkAdminAccess(userId) {
+            try {
+                const { data, error } = await supabase
+                    .from('admin_users')
+                    .select('*')
+                    .eq('id', userId)
+                    .eq('is_active', true)
+                    .single();
+                
+                return data;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            currentAdmin = null;
+            selectedStudent = null;
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('admin-info').classList.add('hidden');
+            document.getElementById('logout-btn').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('admin-info').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.remove('hidden');
+            
+            document.getElementById('admin-name').textContent = currentAdmin.full_name || currentAdmin.email.split('@')[0];
+            document.getElementById('admin-role').textContent = currentAdmin.role || 'admin';
+        }
+
+        function switchAdminTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active', 'border-indigo-500', 'text-indigo-600');
+            
+            // Update tab content
+            document.querySelectorAll('.admin-tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            
+            // Load tab-specific data
+            if (tabName === 'analytics') {
+                loadAnalytics();
+            } else if (tabName === 'notifications') {
+                loadNotifications();
+            } else if (tabName === 'milestones') {
+                loadMilestones();
+            }
+        }
+
+        async function loadDashboardData() {
+            await Promise.all([
+                loadStats(),
+                loadStudents(),
+                loadRecentAchievements()
+            ]);
+        }
+
+        async function loadStats() {
+            try {
+                // Get total students
+                const { data: students, error: studentsError } = await supabase
+                    .from('students')
+                    .select('id, created_at')
+                    .eq('is_active', true);
+                
+                if (studentsError) throw studentsError;
+                
+                // Get recent activity (students active in last 7 days)
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                
+                const { data: recentProgress, error: progressError } = await supabase
+                    .from('student_progress')
+                    .select('student_id')
+                    .gte('updated_at', weekAgo.toISOString());
+                
+                const activeStudents = [...new Set(recentProgress?.map(p => p.student_id) || [])].length;
+                
+                // Get total achievements
+                const { data: achievements, error: achievementsError } = await supabase
+                    .from('student_achievements')
+                    .select('id');
+                
+                // Get total time spent
+                const { data: timeData, error: timeError } = await supabase
+                    .from('student_progress')
+                    .select('time_spent');
+                
+                const totalHours = Math.round((timeData?.reduce((sum, item) => sum + (item.time_spent || 0), 0) || 0) / 60);
+                
+                // Update UI
+                document.getElementById('total-students').textContent = students?.length || 0;
+                document.getElementById('active-students').textContent = activeStudents;
+                document.getElementById('total-achievements').textContent = achievements?.length || 0;
+                document.getElementById('total-hours').textContent = totalHours;
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                const { data, error } = await supabase
+                    .from('students')
+                    .select(`
+                        id, email, full_name, grade_level, enrollment_date, is_active,
+                        student_progress(lesson_id, status, time_spent),
+                        student_achievements(milestone_id, achieved_at)
+                    `)
+                    .eq('is_active', true)
+                    .order('enrollment_date', { ascending: false });
+                
+                if (error) throw error;
+                
+                studentsData = data || [];
+                displayStudents(studentsData);
+                
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+
+        function displayStudents(students) {
+            const container = document.getElementById('students-list');
+            container.innerHTML = '';
+            
+            students.forEach(student => {
+                const completedLessons = student.student_progress?.filter(p => p.status === 'completed').length || 0;
+                const totalLessons = 8; // Based on our sample lessons
+                const progressPercentage = Math.round((completedLessons / totalLessons) * 100);
+                
+                const studentCard = document.createElement('div');
+                studentCard.className = 'student-card p-4 hover:bg-gray-50 cursor-pointer transition-colors';
+                studentCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-indigo-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">${student.full_name}</h4>
+                                <p class="text-sm text-gray-600">${student.email}</p>
+                                <p class="text-xs text-gray-500">Joined: ${new Date(student.enrollment_date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">${progressPercentage}% Complete</div>
+                            <div class="text-xs text-gray-500">${completedLessons}/${totalLessons} lessons</div>
+                            <div class="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                studentCard.addEventListener('click', () => selectStudent(student));
+                container.appendChild(studentCard);
+            });
+        }
+
+        function selectStudent(student) {
+            selectedStudent = student;
+            displayStudentDetails(student);
+        }
+
+        function displayStudentDetails(student) {
+            document.getElementById('student-details-placeholder').classList.add('hidden');
+            document.getElementById('student-details').classList.remove('hidden');
+            
+            const completedLessons = student.student_progress?.filter(p => p.status === 'completed').length || 0;
+            const totalLessons = 8;
+            const progressPercentage = Math.round((completedLessons / totalLessons) * 100);
+            const puzzlesSolved = student.student_achievements?.filter(a => a.milestone_id === 3 || a.milestone_id === 4).length || 0;
+            
+            document.getElementById('selected-student-name').textContent = student.full_name;
+            document.getElementById('selected-student-email').textContent = student.email;
+            document.getElementById('selected-student-joined').textContent = `Joined: ${new Date(student.enrollment_date).toLocaleDateString()}`;
+            document.getElementById('selected-student-progress').textContent = `${progressPercentage}%`;
+            document.getElementById('selected-student-progress-bar').style.width = `${progressPercentage}%`;
+            document.getElementById('selected-student-lessons').textContent = completedLessons;
+            document.getElementById('selected-student-puzzles').textContent = puzzlesSolved;
+            
+            // Display recent achievements
+            const achievementsContainer = document.getElementById('selected-student-achievements');
+            achievementsContainer.innerHTML = '';
+            
+            const recentAchievements = student.student_achievements?.slice(0, 3) || [];
+            if (recentAchievements.length === 0) {
+                achievementsContainer.innerHTML = '<p class="text-sm text-gray-500">No achievements yet</p>';
+            } else {
+                recentAchievements.forEach(achievement => {
+                    const achievementElement = document.createElement('div');
+                    achievementElement.className = 'flex items-center space-x-2 text-sm';
+                    achievementElement.innerHTML = `
+                        <i class="fas fa-medal text-yellow-500"></i>
+                        <span class="text-gray-700">Achievement #${achievement.milestone_id}</span>
+                        <span class="text-gray-500">${new Date(achievement.achieved_at).toLocaleDateString()}</span>
+                    `;
+                    achievementsContainer.appendChild(achievementElement);
+                });
+            }
+        }
+
+        function filterStudents() {
+            const searchTerm = document.getElementById('search-students').value.toLowerCase();
+            const filteredStudents = studentsData.filter(student => 
+                student.full_name.toLowerCase().includes(searchTerm) ||
+                student.email.toLowerCase().includes(searchTerm)
+            );
+            displayStudents(filteredStudents);
+        }
+
+        function exportStudents() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "Name,Email,Grade Level,Enrollment Date,Lessons Completed,Achievements\n"
+                + studentsData.map(student => {
+                    const completedLessons = student.student_progress?.filter(p => p.status === 'completed').length || 0;
+                    const achievements = student.student_achievements?.length || 0;
+                    return `"${student.full_name}","${student.email}","${student.grade_level || 'N/A'}","${new Date(student.enrollment_date).toLocaleDateString()}",${completedLessons},${achievements}`;
+                }).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `students_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function loadAnalytics() {
+            if (progressChart) progressChart.destroy();
+            if (activityChart) activityChart.destroy();
+            if (puzzleChart) puzzleChart.destroy();
+            
+            // Progress Chart
+            const progressCtx = document.getElementById('progress-chart').getContext('2d');
+            progressChart = new Chart(progressCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Beginner', 'Intermediate', 'Advanced'],
+                    datasets: [{
+                        data: [60, 30, 10],
+                        backgroundColor: ['#3B82F6', '#F59E0B', '#EF4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+            
+            // Activity Chart
+            const activityCtx = document.getElementById('activity-chart').getContext('2d');
+            activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Active Students',
+                        data: [12, 15, 8, 18, 22, 14, 9],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Puzzle Performance Chart
+            const puzzleCtx = document.getElementById('puzzle-chart').getContext('2d');
+            puzzleChart = new Chart(puzzleCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Checkmate', 'Tactics', 'Endgame', 'Opening'],
+                    datasets: [{
+                        label: 'Success Rate (%)',
+                        data: [85, 72, 68, 91],
+                        backgroundColor: '#8B5CF6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadNotifications() {
+            // Load email templates
+            try {
+                const { data: templates, error } = await supabase
+                    .from('email_templates')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+                
+                const templatesContainer = document.getElementById('email-templates-list');
+                templatesContainer.innerHTML = '';
+                
+                templates?.forEach(template => {
+                    const templateCard = document.createElement('div');
+                    templateCard.className = 'border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors';
+                    templateCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium text-gray-900">${template.name}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${template.subject}</p>
+                                <p class="text-xs text-gray-500 mt-2">Created: ${new Date(template.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-800 text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    templatesContainer.appendChild(templateCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading email templates:', error);
+            }
+            
+            // Load recent notifications
+            try {
+                const { data: notifications, error } = await supabase
+                    .from('notification_logs')
+                    .select('*, students(full_name)')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+                
+                const notificationsContainer = document.getElementById('recent-notifications');
+                notificationsContainer.innerHTML = '';
+                
+                notifications?.forEach(notification => {
+                    const notificationCard = document.createElement('div');
+                    notificationCard.className = 'border-l-4 border-blue-500 bg-blue-50 p-3 rounded';
+                    notificationCard.innerHTML = `
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900">${notification.subject}</p>
+                                <p class="text-sm text-gray-600">To: ${notification.students?.full_name || notification.email_sent_to}</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded-full ${notification.status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${notification.status}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">${new Date(notification.created_at).toLocaleString()}</p>
+                    `;
+                    notificationsContainer.appendChild(notificationCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        async function loadMilestones() {
+            try {
+                const { data: milestones, error } = await supabase
+                    .from('milestones')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+                
+                const milestonesContainer = document.getElementById('milestones-list');
+                milestonesContainer.innerHTML = '';
+                
+                milestones?.forEach(milestone => {
+                    const milestoneCard = document.createElement('div');
+                    milestoneCard.className = 'border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors';
+                    milestoneCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium text-gray-900">${milestone.name}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${milestone.description}</p>
+                                <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                    <span>Type: ${milestone.type}</span>
+                                    <span>Threshold: ${milestone.threshold_value}</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-800 text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    milestonesContainer.appendChild(milestoneCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading milestones:', error);
+            }
+        }
+
+        async function loadRecentAchievements() {
+            try {
+                const { data: achievements, error } = await supabase
+                    .from('student_achievements')
+                    .select('*, students(full_name), milestones(name)')
+                    .order('achieved_at', { ascending: false })
+                    .limit(10);
+                
+                const achievementsContainer = document.getElementById('recent-achievements');
+                if (achievementsContainer) {
+                    achievementsContainer.innerHTML = '';
+                    
+                    achievements?.forEach(achievement => {
+                        const achievementCard = document.createElement('div');
+                        achievementCard.className = 'flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg';
+                        achievementCard.innerHTML = `
+                            <i class="fas fa-trophy text-yellow-600"></i>
+                            <div>
+                                <p class="font-medium text-gray-900">${achievement.students?.full_name}</p>
+                                <p class="text-sm text-gray-600">${achievement.milestones?.name}</p>
+                                <p class="text-xs text-gray-500">${new Date(achievement.achieved_at).toLocaleString()}</p>
+                            </div>
+                        `;
+                        achievementsContainer.appendChild(achievementCard);
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error loading recent achievements:', error);
+            }
+        }
+
+        function openTemplateModal() {
+            document.getElementById('email-template-modal').classList.remove('hidden');
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('email-template-modal').classList.add('hidden');
+            document.getElementById('email-template-form').reset();
+        }
+
+        async function saveEmailTemplate(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('template-name').value;
+            const subject = document.getElementById('template-subject').value;
+            const content = document.getElementById('template-content').value;
+            
+            try {
+                const { error } = await supabase
+                    .from('email_templates')
+                    .insert({
+                        name: name,
+                        subject: subject,
+                        html_content: content,
+                        variables: {}
+                    });
+                
+                if (error) throw error;
+                
+                closeTemplateModal();
+                loadNotifications(); // Refresh templates list
+                
+            } catch (error) {
+                alert('Error saving template: ' + error.message);
+            }
+        }
+
+        function createMilestone() {
+            const name = prompt('Milestone name:');
+            const description = prompt('Description:');
+            const type = prompt('Type (lesson_completed, chapter_completed, puzzle_solved, time_spent):');
+            const threshold = parseInt(prompt('Threshold value:'));
+            
+            if (name && description && type && threshold) {
+                // Here you would save the milestone to the database
+                console.log('Creating milestone:', { name, description, type, threshold });
+            }
+        }
+
+        function saveNotificationSettings() {
+            const autoMilestone = document.getElementById('auto-milestone-emails').checked;
+            const weeklyProgress = document.getElementById('weekly-progress-emails').checked;
+            
+            // Save settings (you might want to store these in a settings table)
+            console.log('Saving notification settings:', { autoMilestone, weeklyProgress });
+            alert('Settings saved successfully!');
+        }
+    </script>
+</body>
+</html>

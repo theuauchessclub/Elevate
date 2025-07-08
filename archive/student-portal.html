@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - The Up And Up Chess Club</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Chess.js for game logic -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    
+    <style>
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            aspect-ratio: 1;
+            border: 4px solid #8B4513;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .chess-square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .chess-square:hover {
+            background-color: rgba(255, 255, 0, 0.3) !important;
+        }
+        
+        .chess-square.selected {
+            background-color: rgba(0, 255, 0, 0.4) !important;
+        }
+        
+        .chess-square.possible-move {
+            background-color: rgba(0, 0, 255, 0.2) !important;
+        }
+        
+        .chess-square.light {
+            background-color: #f0d9b5;
+        }
+        
+        .chess-square.dark {
+            background-color: #b58863;
+        }
+        
+        .lesson-card {
+            transition: all 0.3s ease;
+        }
+        
+        .lesson-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-gray-900">♔ Student Portal</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="user-info" class="hidden text-sm text-gray-600">
+                        Welcome, <span id="user-name" class="font-semibold"></span>
+                    </div>
+                    <button id="logout-btn" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <div id="login-section" class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 flex items-center justify-center px-4">
+        <!-- Login Form -->
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">♔</div>
+                <h2 class="text-3xl font-bold text-gray-900">Student Login</h2>
+                <p class="text-gray-600 mt-2">Access your chess learning journey</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="email" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-chess mr-2"></i>Enter Portal
+                </button>
+            </form>
+            
+            <div id="login-error" class="hidden mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg"></div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Don't have an account? 
+                    <a href="#" id="show-signup-btn" class="text-indigo-600 hover:text-indigo-800 font-semibold">Sign Up Free</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Signup Form -->
+        <div id="signup-form" class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 hidden">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">🏆</div>
+                <h2 class="text-3xl font-bold text-gray-900">Join Chess Club</h2>
+                <p class="text-gray-600 mt-2">Start your free chess learning journey</p>
+            </div>
+            
+            <form id="signup-form-element" class="space-y-6">
+                <div>
+                    <label for="signup-username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="signup-username" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                           placeholder="Choose a unique username">
+                    <p class="text-xs text-gray-500 mt-1">Must be 3-20 characters, letters and numbers only</p>
+                </div>
+                
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="signup-email" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                           placeholder="your.email@example.com">
+                </div>
+                
+                <div>
+                    <label for="signup-full-name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="signup-full-name" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                           placeholder="Your full name">
+                </div>
+                
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="signup-password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                           placeholder="Create a strong password">
+                    <div id="password-requirements" class="mt-2 text-xs space-y-1">
+                        <div id="req-length" class="text-gray-500">• At least 8 characters</div>
+                        <div id="req-uppercase" class="text-gray-500">• One uppercase letter</div>
+                        <div id="req-lowercase" class="text-gray-500">• One lowercase letter</div>
+                        <div id="req-number" class="text-gray-500">• One number</div>
+                        <div id="req-special" class="text-gray-500">• One special character (!@#$%^&*)</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                           placeholder="Confirm your password">
+                    <div id="password-match" class="mt-1 text-xs text-gray-500"></div>
+                </div>
+                
+                <div>
+                    <label for="signup-grade" class="block text-sm font-medium text-gray-700 mb-2">Grade Level (Optional)</label>
+                    <select id="signup-grade" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">Select grade level</option>
+                        <option value="K">Kindergarten</option>
+                        <option value="1">1st Grade</option>
+                        <option value="2">2nd Grade</option>
+                        <option value="3">3rd Grade</option>
+                        <option value="4">4th Grade</option>
+                        <option value="5">5th Grade</option>
+                        <option value="6">6th Grade</option>
+                        <option value="7">7th Grade</option>
+                        <option value="8">8th Grade</option>
+                        <option value="9">9th Grade</option>
+                        <option value="10">10th Grade</option>
+                        <option value="11">11th Grade</option>
+                        <option value="12">12th Grade</option>
+                        <option value="adult">Adult</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-start">
+                    <input type="checkbox" id="terms-agreement" required 
+                           class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <label for="terms-agreement" class="ml-2 text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-indigo-600 hover:text-indigo-800">Terms of Service</a> and 
+                        <a href="#" class="text-indigo-600 hover:text-indigo-800">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" id="signup-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-user-plus mr-2"></i>Create Free Account
+                </button>
+                <p class="text-xs text-gray-500 mt-2 text-center">Complete all fields above to enable account creation</p>
+            </form>
+            
+            <div id="signup-error" class="hidden mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg"></div>
+            <div id="signup-success" class="hidden mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg"></div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Already have an account? 
+                    <a href="#" id="show-login-btn" class="text-indigo-600 hover:text-indigo-800 font-semibold">Sign In</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Email Confirmation Message -->
+        <div id="email-confirmation" class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 hidden">
+            <div class="text-center">
+                <div class="text-6xl mb-4">📧</div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Check Your Email</h2>
+                <p class="text-gray-600 mb-6">We've sent a confirmation link to your email address. Please click the link to activate your account and start learning chess!</p>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-6">
+                    <h3 class="font-semibold text-blue-800 mb-2">Important Instructions:</h3>
+                    <ul class="text-sm text-blue-700 space-y-2 list-disc pl-5">
+                        <li>Check both your inbox and spam folder</li>
+                        <li>The email will come from <strong>noreply@supabase.co</strong></li>
+                        <li>Subject line will be: <strong>"Confirm Your Email"</strong></li>
+                        <li>After clicking the link, you'll be redirected back to this page</li>
+                        <li>If the link shows "localhost:3000", manually replace it with the current site URL</li>
+                        <li>If the link appears broken, copy and paste it into your browser</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left mb-4">
+                    <h4 class="font-semibold text-yellow-800 mb-2">🔧 If you see a localhost error:</h4>
+                    <p class="text-sm text-yellow-700">Replace "localhost:3000" in the confirmation link with the current website URL and try again.</p>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                        <div class="text-left text-sm text-blue-800">
+                            <p class="font-semibold">What's next?</p>
+                            <p>1. Check your email inbox (and spam folder)</p>
+                            <p>2. Click the confirmation link</p>
+                            <p>3. Return here and sign in</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="resend-confirmation-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors mr-3">
+                    <i class="fas fa-paper-plane mr-2"></i>Resend Email
+                </button>
+                
+                <button id="back-to-login-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="hidden">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl font-bold mb-4">Welcome Back to Your Chess Journey!</h1>
+                    <p class="text-xl opacity-90">Continue building your chess mastery</p>
+                </div>
+                
+                <!-- Progress Overview -->
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center">
+                        <div class="text-3xl font-bold" id="lessons-completed">0</div>
+                        <div class="text-sm opacity-80">Lessons Completed</div>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center">
+                        <div class="text-3xl font-bold" id="puzzles-solved">0</div>
+                        <div class="text-sm opacity-80">Puzzles Solved</div>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center">
+                        <div class="text-3xl font-bold" id="current-chapter">1</div>
+                        <div class="text-sm opacity-80">Current Chapter</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Navigation Tabs -->
+            <div class="bg-white rounded-lg shadow-sm mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6">
+                        <button class="tab-btn active py-4 px-1 border-b-2 border-indigo-500 font-medium text-sm text-indigo-600" data-tab="lessons">
+                            <i class="fas fa-book mr-2"></i>Lessons
+                        </button>
+                        <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="puzzles">
+                            <i class="fas fa-puzzle-piece mr-2"></i>Puzzles
+                        </button>
+                        <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="progress">
+                            <i class="fas fa-chart-line mr-2"></i>Progress
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Lessons Tab -->
+            <div id="lessons-tab" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Lesson List -->
+                    <div class="lg:col-span-2">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Chess Curriculum</h2>
+                        <div id="lessons-grid" class="space-y-4">
+                            <!-- Lessons will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Current Lesson Viewer -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div id="lesson-viewer" class="hidden">
+                            <h3 id="lesson-title" class="text-xl font-bold text-gray-900 mb-4"></h3>
+                            <div id="lesson-content" class="space-y-4"></div>
+                            <div class="mt-6 space-y-3">
+                                <button id="mark-complete-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-check mr-2"></i>Mark as Complete
+                                </button>
+                                <button id="practice-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-chess-board mr-2"></i>Practice on Board
+                                </button>
+                            </div>
+                        </div>
+                        <div id="lesson-placeholder" class="text-center text-gray-500">
+                            <i class="fas fa-book text-4xl mb-4"></i>
+                            <p>Select a lesson to begin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Puzzles Tab -->
+            <div id="puzzles-tab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Interactive Chess Board -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Interactive Chess Board</h3>
+                        <div class="max-w-md mx-auto">
+                            <div id="chess-board" class="chess-board mb-4"></div>
+                            <div class="flex justify-center space-x-4">
+                                <button id="reset-board-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-undo mr-2"></i>Reset
+                                </button>
+                                <button id="hint-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-lightbulb mr-2"></i>Hint
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Puzzle List -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Chess Puzzles</h3>
+                        <div id="puzzles-list" class="space-y-4">
+                            <!-- Puzzles will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tab -->
+            <div id="progress-tab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Learning Progress</h3>
+                        <div id="progress-chart" class="space-y-4">
+                            <!-- Progress visualization will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Achievements</h3>
+                        <div id="achievements" class="space-y-4">
+                            <!-- Achievements will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Global variables
+        let currentUser = null;
+        let currentGame = new Chess();
+        let selectedSquare = null;
+        let currentLesson = null;
+        let currentPuzzle = null;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if user is already logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                showDashboard();
+                await loadUserData();
+            }
+            
+            setupEventListeners();
+            initializeChessBoard();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            
+            // Signup form
+            document.getElementById('signup-form-element').addEventListener('submit', handleSignup);
+            
+            // Show/hide forms
+            document.getElementById('show-signup-btn').addEventListener('click', showSignupForm);
+            document.getElementById('show-login-btn').addEventListener('click', showLoginForm);
+            document.getElementById('back-to-login-btn').addEventListener('click', showLoginForm);
+            document.getElementById('resend-confirmation-btn').addEventListener('click', resendConfirmation);
+            
+            // Password validation
+            document.getElementById('signup-password').addEventListener('input', validatePassword);
+            document.getElementById('signup-confirm-password').addEventListener('input', validatePasswordMatch);
+            document.getElementById('signup-username').addEventListener('input', validateUsername);
+            document.getElementById('terms-agreement').addEventListener('change', checkFormValidity);
+            document.getElementById('signup-email').addEventListener('input', checkFormValidity);
+            document.getElementById('signup-full-name').addEventListener('input', checkFormValidity);
+            
+            // Logout button
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            
+            // Tab navigation
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+            });
+            
+            // Chess board interactions
+            document.getElementById('reset-board-btn').addEventListener('click', resetBoard);
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                showDashboard();
+                await loadUserData();
+                
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('user-info').classList.add('hidden');
+            document.getElementById('logout-btn').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.remove('hidden');
+            document.getElementById('user-name').textContent = currentUser.email.split('@')[0];
+        }
+
+        async function loadUserData() {
+            await loadLessons();
+            await loadPuzzles();
+            await updateProgressStats();
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active', 'border-indigo-500', 'text-indigo-600');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+        }
+
+        function initializeChessBoard() {
+            const board = document.getElementById('chess-board');
+            board.innerHTML = '';
+            
+            for (let row = 7; row >= 0; row--) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    const squareName = String.fromCharCode(97 + col) + (row + 1);
+                    const isLight = (row + col) % 2 === 0;
+                    
+                    square.className = `chess-square ${isLight ? 'light' : 'dark'}`;
+                    square.dataset.square = squareName;
+                    square.addEventListener('click', () => handleSquareClick(squareName));
+                    
+                    board.appendChild(square);
+                }
+            }
+            
+            updateBoardDisplay();
+        }
+
+        function updateBoardDisplay() {
+            const board = currentGame.board();
+            const squares = document.querySelectorAll('.chess-square');
+            
+            squares.forEach((square, index) => {
+                const row = 7 - Math.floor(index / 8);
+                const col = index % 8;
+                const piece = board[row][col];
+                
+                if (piece) {
+                    square.textContent = getPieceSymbol(piece);
+                } else {
+                    square.textContent = '';
+                }
+            });
+        }
+
+        function getPieceSymbol(piece) {
+            const symbols = {
+                'wk': '♔', 'wq': '♕', 'wr': '♖', 'wb': '♗', 'wn': '♘', 'wp': '♙',
+                'bk': '♚', 'bq': '♛', 'br': '♜', 'bb': '♝', 'bn': '♞', 'bp': '♟'
+            };
+            return symbols[piece.color + piece.type] || '';
+        }
+
+        function handleSquareClick(square) {
+            if (selectedSquare === square) {
+                selectedSquare = null;
+                clearHighlights();
+                return;
+            }
+            
+            if (selectedSquare) {
+                const move = currentGame.move({
+                    from: selectedSquare,
+                    to: square,
+                    promotion: 'q'
+                });
+                
+                if (move) {
+                    updateBoardDisplay();
+                    selectedSquare = null;
+                    clearHighlights();
+                    
+                    if (currentPuzzle) {
+                        checkPuzzleSolution();
+                    }
+                } else {
+                    selectedSquare = square;
+                    highlightSquare(square);
+                }
+            } else {
+                selectedSquare = square;
+                highlightSquare(square);
+            }
+        }
+
+        function highlightSquare(square) {
+            clearHighlights();
+            const squareElement = document.querySelector(`[data-square="${square}"]`);
+            if (squareElement) {
+                squareElement.classList.add('selected');
+                
+                // Show possible moves
+                const moves = currentGame.moves({ square: square, verbose: true });
+                moves.forEach(move => {
+                    const targetSquare = document.querySelector(`[data-square="${move.to}"]`);
+                    if (targetSquare) {
+                        targetSquare.classList.add('possible-move');
+                    }
+                });
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.chess-square').forEach(square => {
+                square.classList.remove('selected', 'possible-move');
+            });
+        }
+
+        function resetBoard() {
+            currentGame.reset();
+            updateBoardDisplay();
+            selectedSquare = null;
+            clearHighlights();
+        }
+
+        async function loadLessons() {
+            // For now, we'll create some sample lessons
+            const sampleLessons = [
+                {
+                    id: 1,
+                    title: "Chapter 1: The Chess Kingdom",
+                    description: "Introduction to chess pieces and the board",
+                    chapter: 1,
+                    lesson_number: 1,
+                    difficulty_level: "beginner",
+                    content: {
+                        text: "Welcome to the magical world of chess! In this lesson, you'll meet all the chess pieces and learn how they move around the kingdom.",
+                        objectives: ["Learn piece names", "Understand piece movements", "Practice piece identification"]
+                    }
+                },
+                {
+                    id: 2,
+                    title: "Chapter 1: How Pieces Move",
+                    description: "Learn the unique movements of each chess piece",
+                    chapter: 1,
+                    lesson_number: 2,
+                    difficulty_level: "beginner",
+                    content: {
+                        text: "Each chess piece has its own special way of moving. Let's explore how each piece travels across the board!",
+                        objectives: ["Master pawn movement", "Learn piece capture rules", "Practice basic movements"]
+                    }
+                }
+            ];
+            
+            displayLessons(sampleLessons);
+        }
+
+        function displayLessons(lessons) {
+            const grid = document.getElementById('lessons-grid');
+            grid.innerHTML = '';
+            
+            lessons.forEach(lesson => {
+                const card = document.createElement('div');
+                card.className = 'lesson-card bg-white rounded-lg shadow-md p-6 cursor-pointer border border-gray-200 hover:border-indigo-300';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-book text-indigo-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900">${lesson.title}</h3>
+                                <p class="text-sm text-gray-600">Chapter ${lesson.chapter}, Lesson ${lesson.lesson_number}</p>
+                            </div>
+                        </div>
+                        <div class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                            ${lesson.difficulty_level}
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">${lesson.description}</p>
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-clock mr-1"></i> 15 min
+                        </div>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            Start Lesson
+                        </button>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => openLesson(lesson));
+                grid.appendChild(card);
+            });
+        }
+
+        function openLesson(lesson) {
+            currentLesson = lesson;
+            document.getElementById('lesson-placeholder').classList.add('hidden');
+            document.getElementById('lesson-viewer').classList.remove('hidden');
+            document.getElementById('lesson-title').textContent = lesson.title;
+            
+            const content = document.getElementById('lesson-content');
+            content.innerHTML = `
+                <p class="text-gray-700">${lesson.content.text}</p>
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-blue-900 mb-2">Learning Objectives:</h4>
+                    <ul class="list-disc list-inside text-blue-800 space-y-1">
+                        ${lesson.content.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        async function loadPuzzles() {
+            // Sample chess puzzles
+            const samplePuzzles = [
+                {
+                    id: 1,
+                    title: "Checkmate in 1",
+                    description: "Find the checkmate in one move",
+                    fen_position: "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+                    solution_moves: ["Bxf7#"],
+                    difficulty_level: "beginner",
+                    tags: ["checkmate", "tactics"]
+                }
+            ];
+            
+            displayPuzzles(samplePuzzles);
+        }
+
+        function displayPuzzles(puzzles) {
+            const list = document.getElementById('puzzles-list');
+            list.innerHTML = '';
+            
+            puzzles.forEach(puzzle => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold text-gray-900">${puzzle.title}</h4>
+                        <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                            ${puzzle.difficulty_level}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">${puzzle.description}</p>
+                    <div class="flex justify-between items-center">
+                        <div class="text-xs text-gray-500">
+                            ${puzzle.tags.join(', ')}
+                        </div>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                            Try Puzzle
+                        </button>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => loadPuzzle(puzzle));
+                list.appendChild(card);
+            });
+        }
+
+        function loadPuzzle(puzzle) {
+            currentPuzzle = puzzle;
+            currentGame.load(puzzle.fen_position);
+            updateBoardDisplay();
+            selectedSquare = null;
+            clearHighlights();
+        }
+
+        function checkPuzzleSolution() {
+            if (!currentPuzzle) return;
+            
+            const history = currentGame.history();
+            const lastMove = history[history.length - 1];
+            
+            if (currentPuzzle.solution_moves.includes(lastMove)) {
+                alert('Congratulations! You solved the puzzle!');
+                // Here you would update the database with the solved puzzle
+            }
+        }
+
+        function showHint() {
+            if (currentPuzzle) {
+                alert(`Hint: Try ${currentPuzzle.solution_moves[0]}`);
+            }
+        }
+
+        // Form switching functions
+        function showSignupForm() {
+            document.querySelector('#login-section .max-w-md:first-child').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+            document.getElementById('email-confirmation').classList.add('hidden');
+        }
+
+        function showLoginForm() {
+            document.querySelector('#login-section .max-w-md:first-child').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('email-confirmation').classList.add('hidden');
+        }
+
+        function showEmailConfirmation() {
+            document.querySelector('#login-section .max-w-md:first-child').classList.add('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('email-confirmation').classList.remove('hidden');
+        }
+
+        // Password validation
+        function validatePassword() {
+            const password = document.getElementById('signup-password').value;
+            const requirements = {
+                'req-length': password.length >= 8,
+                'req-uppercase': /[A-Z]/.test(password),
+                'req-lowercase': /[a-z]/.test(password),
+                'req-number': /\d/.test(password),
+                'req-special': /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            };
+
+            Object.keys(requirements).forEach(reqId => {
+                const element = document.getElementById(reqId);
+                if (requirements[reqId]) {
+                    element.className = 'text-green-600';
+                    element.innerHTML = '✓ ' + element.textContent.replace('• ', '').replace('✓ ', '');
+                } else {
+                    element.className = 'text-gray-500';
+                    element.innerHTML = '• ' + element.textContent.replace('• ', '').replace('✓ ', '');
+                }
+            });
+
+            validatePasswordMatch();
+            checkFormValidity();
+        }
+
+        function validatePasswordMatch() {
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const matchDiv = document.getElementById('password-match');
+
+            if (confirmPassword.length > 0) {
+                if (password === confirmPassword) {
+                    matchDiv.textContent = '✓ Passwords match';
+                    matchDiv.className = 'mt-1 text-xs text-green-600';
+                } else {
+                    matchDiv.textContent = '✗ Passwords do not match';
+                    matchDiv.className = 'mt-1 text-xs text-red-600';
+                }
+            } else {
+                matchDiv.textContent = '';
+            }
+
+            checkFormValidity();
+        }
+
+        function validateUsername() {
+            const username = document.getElementById('signup-username').value;
+            const isValid = /^[a-zA-Z0-9]{3,20}$/.test(username);
+            
+            const input = document.getElementById('signup-username');
+            if (username.length > 0) {
+                if (isValid) {
+                    input.classList.remove('border-red-300');
+                    input.classList.add('border-green-300');
+                } else {
+                    input.classList.remove('border-green-300');
+                    input.classList.add('border-red-300');
+                }
+            } else {
+                input.classList.remove('border-red-300', 'border-green-300');
+            }
+
+            checkFormValidity();
+        }
+
+        function checkFormValidity() {
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const fullName = document.getElementById('signup-full-name').value;
+            const termsAgreed = document.getElementById('terms-agreement').checked;
+
+            const passwordValid = password.length >= 8 && 
+                                /[A-Z]/.test(password) && 
+                                /[a-z]/.test(password) && 
+                                /\d/.test(password) && 
+                                /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            const passwordsMatch = password === confirmPassword;
+            const usernameValid = /^[a-zA-Z0-9]{3,20}$/.test(username);
+            const emailValid = email.includes('@') && email.includes('.');
+            const nameValid = fullName.trim().length >= 2;
+
+            const isValid = passwordValid && passwordsMatch && usernameValid && emailValid && nameValid && termsAgreed;
+            
+            const submitBtn = document.getElementById('signup-submit-btn');
+            submitBtn.disabled = !isValid;
+        }
+
+        // Signup handler
+        async function handleSignup(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const fullName = document.getElementById('signup-full-name').value;
+            const password = document.getElementById('signup-password').value;
+            const gradeLevel = document.getElementById('signup-grade').value;
+            
+            const errorDiv = document.getElementById('signup-error');
+            const successDiv = document.getElementById('signup-success');
+            
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            try {
+                // Create user account with Supabase Auth
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            username: username,
+                            full_name: fullName,
+                            grade_level: gradeLevel
+                        },
+                        emailRedirectTo: getConfirmationURL()
+                    }
+                });
+                
+                if (error) throw error;
+                
+                // Show email confirmation message
+                showEmailConfirmation();
+                
+                // Show success message
+                successDiv.textContent = 'Account created successfully! Please check your email to confirm your account.';
+                successDiv.classList.remove('hidden');
+                
+                // Send admin notification
+                await sendAdminNotification(email, fullName);
+                
+            } catch (error) {
+                console.error('Signup error:', error);
+                errorDiv.textContent = error.message || 'An error occurred during signup. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Resend confirmation email
+        async function resendConfirmation() {
+            const email = document.getElementById('signup-email').value;
+            if (!email) {
+                alert('Please enter your email address first');
+                return;
+            }
+
+            try {
+                const { error } = await supabase.auth.resend({
+                    type: 'signup',
+                    email: email,
+                    options: {
+                        emailRedirectTo: getConfirmationURL()
+                    }
+                });
+                
+                if (error) throw error;
+                
+                alert('Confirmation email sent! Please check your inbox.');
+                
+            } catch (error) {
+                alert('Error sending confirmation email: ' + error.message);
+            }
+        }
+
+        // Get proper confirmation URL for emails
+        function getConfirmationURL() {
+            // Use current URL but replace localhost:3000 with proper domain if needed
+            let baseURL = window.location.origin;
+            
+            // If we're on localhost, use a proper production URL
+            if (baseURL.includes('localhost')) {
+                // Use youware.com as the base domain for production
+                baseURL = 'https://youware.com';
+            }
+            
+            return baseURL + window.location.pathname;
+        }
+
+        // Send notification to admin about new registration
+        async function sendAdminNotification(userEmail, userName) {
+            try {
+                // Insert notification into the database
+                const { error } = await supabase
+                    .from('notification_logs')
+                    .insert({
+                        email_sent_to: 'admin@upandupchess.com',
+                        subject: 'New User Registration',
+                        content: `New user registered: ${userName} (${userEmail})`,
+                        status: 'sent',
+                        sent_at: new Date().toISOString(),
+                        notification_type: 'new_registration'
+                    });
+                
+                if (error) {
+                    console.error('Error logging admin notification:', error);
+                }
+                
+                console.log('Admin notification sent for new registration');
+                
+            } catch (error) {
+                console.error('Error sending admin notification:', error);
+            }
+        }
+
+        async function updateProgressStats() {
+            // This would fetch real progress data from the database
+            document.getElementById('lessons-completed').textContent = '2';
+            document.getElementById('puzzles-solved').textContent = '5';
+            document.getElementById('current-chapter').textContent = '1';
+        }
+    </script>
+</body>
+</html>

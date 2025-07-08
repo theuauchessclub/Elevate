@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight Patron Registration - The Up And Up Chess Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 to-teal-100 min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-chess-knight text-white text-3xl"></i>
+            </div>
+            <h1 class="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Knight Patron Registration
+            </h1>
+            <p class="text-xl text-gray-700 max-w-2xl mx-auto">
+                Thank you for choosing to sponsor a qualified student's complete chess education
+            </p>
+            <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 max-w-md mx-auto mt-6">
+                <p class="text-emerald-800 font-bold text-lg">$500 Sponsorship</p>
+                <p class="text-sm text-emerald-700">All Tier 1 Benefits + Full Tuition, Tournament Support & Travel Assistance</p>
+            </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8 md:p-12">
+            <form id="sponsorship-form" class="space-y-6">
+                <!-- Personal Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="firstName" class="block text-sm font-bold text-gray-700 mb-2">First Name *</label>
+                        <input type="text" id="firstName" name="firstName" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="lastName" class="block text-sm font-bold text-gray-700 mb-2">Last Name *</label>
+                        <input type="text" id="lastName" name="lastName" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Email Address *</label>
+                    <input type="email" id="email" name="email" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                </div>
+
+                <div>
+                    <label for="phone" class="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                </div>
+
+                <div>
+                    <label for="organization" class="block text-sm font-bold text-gray-700 mb-2">Organization/Company</label>
+                    <input type="text" id="organization" name="organization" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                </div>
+
+                <!-- Student Information -->
+                <div class="pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Student Information (if known)</h3>
+                    
+                    <div>
+                        <label for="studentName" class="block text-sm font-bold text-gray-700 mb-2">Student Name</label>
+                        <input type="text" id="studentName" name="studentName" 
+                            placeholder="Leave blank if student not yet selected"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="studentAge" class="block text-sm font-bold text-gray-700 mb-2">Student Age</label>
+                        <input type="number" id="studentAge" name="studentAge" min="5" max="18"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="studentSchool" class="block text-sm font-bold text-gray-700 mb-2">Student's School</label>
+                        <input type="text" id="studentSchool" name="studentSchool" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="chessLevel" class="block text-sm font-bold text-gray-700 mb-2">Student's Chess Experience</label>
+                        <select id="chessLevel" name="chessLevel" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="">Select experience level</option>
+                            <option value="beginner">Beginner (0-6 months)</option>
+                            <option value="novice">Novice (6 months - 1 year)</option>
+                            <option value="intermediate">Intermediate (1-2 years)</option>
+                            <option value="advanced">Advanced (2+ years)</option>
+                            <option value="tournament">Tournament Player</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Travel and Tournament Preferences -->
+                <div class="pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Tournament & Travel Preferences</h3>
+                    
+                    <div>
+                        <label for="tournamentTypes" class="block text-sm font-bold text-gray-700 mb-2">Preferred Tournament Types</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="tournamentTypes" value="local" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Local Tournaments</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="tournamentTypes" value="regional" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">Regional Tournaments</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="tournamentTypes" value="national" class="w-4 h-4 text-emerald-600">
+                                <span class="ml-2 text-sm">National Tournaments</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="travelRadius" class="block text-sm font-bold text-gray-700 mb-2">Maximum Travel Distance</label>
+                        <select id="travelRadius" name="travelRadius" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="">Select travel preference</option>
+                            <option value="local">Local only (within 50 miles)</option>
+                            <option value="regional">Regional (within 200 miles)</option>
+                            <option value="national">National (anywhere in US)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div>
+                    <label for="message" class="block text-sm font-bold text-gray-700 mb-2">Additional Comments</label>
+                    <textarea id="message" name="message" rows="4" 
+                        placeholder="Any special requests, student selection criteria, or additional information..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+                </div>
+
+                <!-- Terms and Agreement -->
+                <div class="bg-emerald-50 rounded-xl p-6">
+                    <div class="flex items-start space-x-3">
+                        <input type="checkbox" id="terms" name="terms" required 
+                            class="w-5 h-5 text-emerald-600 mt-1">
+                        <label for="terms" class="text-sm text-gray-700">
+                            I agree to the terms of sponsorship and understand that this $500 contribution will provide all Tier 1 benefits plus full tuition credit for a qualifying student, tournament registration assistance, travel support, lodging, and meals. I authorize The Up And Up Chess Club to contact me regarding student selection and tournament opportunities.
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center pt-6">
+                    <button type="submit" 
+                        class="w-full md:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+                        <i class="fas fa-graduation-cap mr-3"></i>
+                        Register as Knight Patron
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-8">
+            <a href="index.html#sponsorship" class="text-emerald-600 hover:text-emerald-700 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Sponsorship Options
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('sponsorship-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (data[key]) {
+                    if (Array.isArray(data[key])) {
+                        data[key].push(value);
+                    } else {
+                        data[key] = [data[key], value];
+                    }
+                } else {
+                    data[key] = value;
+                }
+            });
+            
+            // Add tier information
+            data.tier = 'Knight Patron';
+            data.amount = '$500';
+            data.tierLevel = '2';
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Processing...';
+            submitBtn.disabled = true;
+            
+            // Simulate email sending
+            setTimeout(() => {
+                // Create email content
+                const emailSubject = `New Knight Patron Registration - ${data.firstName} ${data.lastName}`;
+                const emailBody = `
+New Knight Patron Registration
+
+SPONSOR DETAILS:
+Name: ${data.firstName} ${data.lastName}
+Email: ${data.email}
+Phone: ${data.phone || 'Not provided'}
+Organization: ${data.organization || 'Not provided'}
+
+STUDENT INFORMATION:
+Student Name: ${data.studentName || 'To be selected'}
+Student Age: ${data.studentAge || 'Not specified'}
+Student's School: ${data.studentSchool || 'Not specified'}
+Chess Experience: ${data.chessLevel || 'Not specified'}
+
+TOURNAMENT PREFERENCES:
+Tournament Types: ${Array.isArray(data.tournamentTypes) ? data.tournamentTypes.join(', ') : (data.tournamentTypes || 'Not specified')}
+Travel Radius: ${data.travelRadius || 'Not specified'}
+
+SPONSORSHIP DETAILS:
+Tier: Knight Patron ($500)
+Benefits: All Tier 1 Benefits + Full Tuition Credit, Tournament Registration, Travel Support, Lodging & Meals
+
+ADDITIONAL COMMENTS:
+${data.message || 'None provided'}
+
+Registration Time: ${new Date().toLocaleString()}
+                `;
+                
+                // Send email to theuauchessclub@gmail.com
+                window.location.href = `mailto:theuauchessclub@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                
+                // Redirect to success page
+                setTimeout(() => {
+                    window.location.href = 'sponsorship-success.html?tier=knight';
+                }, 1000);
+                
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate - The Up And Up Chess Club</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AbMMpefczCW0jXQHYBxlPWOCVgRIFJKRlFHWAdH9CaeEqXJGXu3u6rkdB_Nc85eM1RxHLMRrPZ--O3Wv&currency=USD&intent=capture&enable-funding=venmo,paylater,card&disable-funding=credit"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --chess-primary: #1E293B;    /* Slate 800 - Deep rich navy */
+            --chess-secondary: #6366F1;  /* Indigo 500 - Bold vibrant indigo */
+            --chess-accent: #F59E0B;     /* Amber 500 - Vibrant amber/gold */
+            --chess-vibrant: #06B6D4;    /* Cyan 500 - Electric cyan */
+            --chess-highlight: #EC4899;  /* Pink 500 - Bold pink */
+            --chess-dark: #0F172A;       /* Slate 900 - Near black */
+            --chess-white: #FFFFFF;      /* Pure white */
+            --chess-light: #F9FAFB;      /* Gray 50 - Almost white */
+            --chess-success: #10B981;    /* Emerald 500 - Bold emerald */
+            --chess-warning: #F43F5E;    /* Rose 500 - Bold rose */
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+        
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .chess-pattern {
+            background-image: 
+                linear-gradient(45deg, #F1F5F9 25%, transparent 25%), 
+                linear-gradient(-45deg, #F1F5F9 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #F1F5F9 75%), 
+                linear-gradient(-45deg, transparent 75%, #F1F5F9 75%);
+            background-size: 60px 60px;
+            background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
+            background-color: #E2E8F0;
+        }
+        
+        .donation-tier {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .donation-tier:hover {
+            transform: translateY(-5px);
+        }
+        
+        .tier-selected {
+            border-color: var(--chess-accent);
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.1), 0 10px 10px -5px rgba(245, 158, 11, 0.04);
+            transform: translateY(-5px);
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+            70% {
+                transform: scale(1);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+        }
+        
+        .animate-pulse-ring:before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: -8px;
+            right: -8px;
+            bottom: -8px;
+            border-radius: 50%;
+            background: var(--chess-accent);
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            z-index: -1;
+        }
+        
+        #custom-amount-container {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease;
+        }
+        
+        #custom-amount-container.active {
+            height: 80px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <!-- Logo/Name -->
+                <a href="index.html" class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
+                        <i class="fas fa-chess-knight text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-xl font-bold text-gray-900">The Up And Up</h1>
+                        <p class="text-sm text-indigo-600 font-medium">Chess Club</p>
+                    </div>
+                </a>
+                
+                <!-- Navigation -->
+                <nav class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-600 hover:text-indigo-600 font-medium">Home</a>
+                    <a href="index.html#about" class="text-gray-600 hover:text-indigo-600 font-medium">About</a>
+                    <a href="index.html#curriculum" class="text-gray-600 hover:text-indigo-600 font-medium">Curriculum</a>
+                    <a href="index.html#benefits" class="text-gray-600 hover:text-indigo-600 font-medium">Benefits</a>
+                    <a href="index.html#pricing" class="text-gray-600 hover:text-indigo-600 font-medium">Pricing</a>
+                    <a href="founder.html" class="text-gray-600 hover:text-indigo-600 font-medium">Founder</a>
+                    <a href="#" class="text-amber-600 hover:text-amber-700 font-bold">Donate</a>
+                </nav>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-500 focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden mt-4 hidden">
+                <div class="flex flex-col space-y-3 p-4 bg-gray-50 rounded-lg">
+                    <a href="index.html" class="text-gray-600 hover:text-indigo-600 font-medium px-2 py-1">Home</a>
+                    <a href="index.html#about" class="text-gray-600 hover:text-indigo-600 font-medium px-2 py-1">About</a>
+                    <a href="index.html#curriculum" class="text-gray-600 hover:text-indigo-600 font-medium px-2 py-1">Curriculum</a>
+                    <a href="index.html#benefits" class="text-gray-600 hover:text-indigo-600 font-medium px-2 py-1">Benefits</a>
+                    <a href="index.html#pricing" class="text-gray-600 hover:text-indigo-600 font-medium px-2 py-1">Pricing</a>
+                    <a href="founder.html" class="text-gray-600 hover:text-indigo-600 font-medium px-2 py-1">Founder</a>
+                    <a href="#" class="bg-amber-100 text-amber-600 font-bold px-2 py-1 rounded">Donate</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-12 md:py-20 bg-gradient-to-br from-indigo-50 to-cyan-50">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                    Support Our <span class="text-indigo-600">Chess</span> Mission
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    Your donation helps us bring the transformative power of chess to more young minds, 
+                    creating future leaders, thinkers, and problem-solvers.
+                </p>
+                <div class="flex justify-center">
+                    <a href="#donate" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-lg flex items-center">
+                        <i class="fas fa-heart mr-3"></i>
+                        Donate Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Impact Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        The Impact of Your Donation
+                    </h2>
+                    <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                        Every contribution makes a difference in our mission to transform young minds through chess. 
+                        Here's how your support creates real change:
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Impact Card 1 -->
+                    <div class="bg-indigo-50 rounded-xl p-6 text-center">
+                        <div class="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+                            <i class="fas fa-chess-board text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Chess Equipment</h3>
+                        <p class="text-gray-600">
+                            Provides tournament-quality chess sets, boards, and teaching resources for schools and community centers.
+                        </p>
+                    </div>
+                    
+                    <!-- Impact Card 2 -->
+                    <div class="bg-cyan-50 rounded-xl p-6 text-center">
+                        <div class="w-16 h-16 bg-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+                            <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Student Scholarships</h3>
+                        <p class="text-gray-600">
+                            Funds chess education for students who otherwise couldn't afford lessons, tournaments, and advanced training.
+                        </p>
+                    </div>
+                    
+                    <!-- Impact Card 3 -->
+                    <div class="bg-amber-50 rounded-xl p-6 text-center">
+                        <div class="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+                            <i class="fas fa-trophy text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Tournament Support</h3>
+                        <p class="text-gray-600">
+                            Enables students to compete in regional and national tournaments, including travel assistance and entry fees.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Impact Statistics -->
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div class="p-6">
+                        <div class="text-4xl font-bold text-indigo-600 mb-2">250+</div>
+                        <p class="text-gray-600">Students supported annually</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="text-4xl font-bold text-cyan-600 mb-2">15</div>
+                        <p class="text-gray-600">School programs established</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="text-4xl font-bold text-amber-600 mb-2">96%</div>
+                        <p class="text-gray-600">Of funds directly support programs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Donation Section -->
+    <section id="donate" class="py-16 bg-gradient-to-br from-indigo-50 to-cyan-50">
+        <div class="container mx-auto px-4">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        Make Your Contribution
+                    </h2>
+                    <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                        Choose a donation tier or make a custom donation to support our chess education programs.
+                        All donations are tax-deductible.
+                    </p>
+                </div>
+                
+                <!-- Main Content Area -->
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div class="md:flex">
+                        <!-- Donation Form Side -->
+                        <div class="md:w-3/5 p-6 md:p-10">
+                            <form id="donation-form" class="space-y-6">
+                                <!-- Donation Tiers -->
+                                <div>
+                                    <label class="block text-gray-700 font-bold mb-4">Select Donation Tier</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <!-- Tier 1: Pawn -->
+                                        <div id="tier-pawn" class="donation-tier bg-white border-2 border-gray-200 rounded-xl p-4 text-center">
+                                            <div class="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                                <i class="fas fa-chess-pawn text-white text-xl"></i>
+                                            </div>
+                                            <h3 class="font-bold text-gray-900 mb-1">Pawn Supporter</h3>
+                                            <p class="text-2xl font-bold text-amber-600 mb-1">$50</p>
+                                            <p class="text-sm text-gray-600">
+                                                Supplies for chess education
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Tier 2: Knight -->
+                                        <div id="tier-knight" class="donation-tier bg-white border-2 border-gray-200 rounded-xl p-4 text-center">
+                                            <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                                <i class="fas fa-chess-knight text-white text-xl"></i>
+                                            </div>
+                                            <h3 class="font-bold text-gray-900 mb-1">Knight Supporter</h3>
+                                            <p class="text-2xl font-bold text-emerald-600 mb-1">$100</p>
+                                            <p class="text-sm text-gray-600">
+                                                Student tournament sponsor
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Tier 3: Bishop -->
+                                        <div id="tier-bishop" class="donation-tier bg-white border-2 border-gray-200 rounded-xl p-4 text-center">
+                                            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                                <i class="fas fa-chess-bishop text-white text-xl"></i>
+                                            </div>
+                                            <h3 class="font-bold text-gray-900 mb-1">Bishop Benefactor</h3>
+                                            <p class="text-2xl font-bold text-purple-600 mb-1">$250</p>
+                                            <p class="text-sm text-gray-600">
+                                                Full student scholarship
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Custom Amount -->
+                                    <div class="mt-4 flex items-center">
+                                        <input type="checkbox" id="custom-donation-checkbox" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                        <label for="custom-donation-checkbox" class="ml-2 block text-gray-700">
+                                            I'd like to donate a custom amount
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="custom-amount-container" class="mt-4">
+                                        <label for="custom-amount" class="block text-gray-700 mb-2">Enter Custom Amount</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 text-lg">$</span>
+                                            </div>
+                                            <input type="number" id="custom-amount" min="5" placeholder="Enter amount" class="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500">USD</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="hidden" id="selected-tier" name="tier" value="knight">
+                                    <input type="hidden" id="donation-amount" name="amount" value="100">
+                                </div>
+                                
+                                <!-- Donor Information -->
+                                <div class="pt-4 border-t border-gray-200">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-4">Donor Information</h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="donor-name" class="block text-gray-700 mb-2">Name (Optional)</label>
+                                            <input type="text" id="donor-name" name="name" placeholder="Your name" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="donor-email" class="block text-gray-700 mb-2">Email (Optional)</label>
+                                            <input type="email" id="donor-email" name="email" placeholder="Your email address" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <label for="donor-message" class="block text-gray-700 mb-2">Message (Optional)</label>
+                                        <textarea id="donor-message" name="message" rows="3" placeholder="Share why you're supporting chess education" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- Payment Method -->
+                                <div class="pt-4 border-t border-gray-200">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-4">Payment Method</h3>
+                                    <div id="paypal-button-container" class="mt-4"></div>
+                                    
+                                    <div class="mt-6 text-center text-sm text-gray-500">
+                                        <p>Your donation is securely processed by PayPal.</p>
+                                        <p>The Up And Up Chess Club is a registered 501(c)(3) nonprofit organization.</p>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Info Side -->
+                        <div class="md:w-2/5 bg-gradient-to-br from-indigo-600 to-cyan-600 text-white p-6 md:p-10">
+                            <h3 class="text-2xl font-bold mb-6">Thank You for Your Support</h3>
+                            
+                            <div class="space-y-6">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <i class="fas fa-check-circle text-amber-400 text-lg"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="font-bold text-amber-300">Tax Deductible</h4>
+                                        <p class="text-indigo-100">
+                                            Your donation is fully tax-deductible as allowed by law. You will receive a receipt for your records.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <i class="fas fa-check-circle text-amber-400 text-lg"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="font-bold text-amber-300">Transparent Impact</h4>
+                                        <p class="text-indigo-100">
+                                            96% of all donations go directly to chess education programs, with just 4% for administrative costs.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <i class="fas fa-check-circle text-amber-400 text-lg"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h4 class="font-bold text-amber-300">Regular Updates</h4>
+                                        <p class="text-indigo-100">
+                                            If you provide your email, you'll receive updates on how your donation is making a difference.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Testimonial -->
+                            <div class="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                                <blockquote class="text-lg italic text-white mb-4">
+                                    "Chess taught me to think before I move in life. The Up And Up Chess Club gave me that gift, and now I'm going to college on a scholarship."
+                                </blockquote>
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center">
+                                        <span class="font-bold text-indigo-800">JW</span>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="font-semibold text-white">Jamal Williams</p>
+                                        <p class="text-indigo-200 text-sm">Former Student, Class of 2022</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Contact Info -->
+                            <div class="mt-12">
+                                <h4 class="font-bold text-lg mb-4">Questions about donating?</h4>
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-envelope text-amber-400 mr-3"></i>
+                                    <a href="mailto:theuauchessclub@gmail.com" class="text-white hover:text-amber-300 transition-colors">
+                                        theuauchessclub@gmail.com
+                                    </a>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-phone text-amber-400 mr-3"></i>
+                                    <span class="text-white">Call us at (812) 345-9298</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading/Processing State -->
+                <div id="processing-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white rounded-xl p-8 max-w-md w-full text-center">
+                        <div class="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Processing Your Donation</h3>
+                        <p class="text-gray-600">Please wait while we securely process your contribution...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <!-- Column 1: About -->
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">The Up And Up Chess Club</h3>
+                        <p class="text-gray-400 mb-4">
+                            Transforming minds through chess education since 2017.
+                        </p>
+                        <div class="flex space-x-4">
+                            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Column 2: Quick Links -->
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Quick Links</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="index.html" class="text-gray-400 hover:text-white transition-colors">Home</a>
+                            </li>
+                            <li>
+                                <a href="index.html#about" class="text-gray-400 hover:text-white transition-colors">About Us</a>
+                            </li>
+                            <li>
+                                <a href="index.html#curriculum" class="text-gray-400 hover:text-white transition-colors">Curriculum</a>
+                            </li>
+                            <li>
+                                <a href="index.html#benefits" class="text-gray-400 hover:text-white transition-colors">Benefits</a>
+                            </li>
+                            <li>
+                                <a href="founder.html" class="text-gray-400 hover:text-white transition-colors">Our Founder</a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Column 3: Programs -->
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Programs</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="index.html#pricing" class="text-gray-400 hover:text-white transition-colors">After School Program</a>
+                            </li>
+                            <li>
+                                <a href="index.html#pricing" class="text-gray-400 hover:text-white transition-colors">Private Lessons</a>
+                            </li>
+                            <li>
+                                <a href="index.html#pricing" class="text-gray-400 hover:text-white transition-colors">Group Classes</a>
+                            </li>
+                            <li>
+                                <a href="index.html#pricing" class="text-gray-400 hover:text-white transition-colors">Tournament Prep</a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-amber-400 hover:text-amber-300 transition-colors font-medium">Donate</a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Column 4: Contact -->
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Contact Us</h3>
+                        <ul class="space-y-2">
+                            <li class="flex items-start">
+                                <i class="fas fa-envelope text-indigo-400 mt-1 mr-3"></i>
+                                <a href="mailto:theuauchessclub@gmail.com" class="text-gray-400 hover:text-white transition-colors">
+                                    theuauchessclub@gmail.com
+                                </a>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-phone text-indigo-400 mt-1 mr-3"></i>
+                                <span class="text-gray-400">(812) 345-9298</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-map-marker-alt text-indigo-400 mt-1 mr-3"></i>
+                                <span class="text-gray-400">Bloomington, Indiana</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-800 mt-12 pt-8 text-center">
+                    <p class="text-gray-500">
+                        &copy; 2025 The Up And Up Chess Club. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Donation tier selection
+        const tiers = {
+            pawn: { amount: 50, element: document.getElementById('tier-pawn') },
+            knight: { amount: 100, element: document.getElementById('tier-knight') },
+            bishop: { amount: 250, element: document.getElementById('tier-bishop') }
+        };
+        
+        let selectedTier = 'knight'; // Default selected tier
+        
+        // Initialize with default tier selected
+        tiers[selectedTier].element.classList.add('tier-selected');
+        document.getElementById('selected-tier').value = selectedTier;
+        document.getElementById('donation-amount').value = tiers[selectedTier].amount;
+        
+        // Set up tier selection handlers
+        Object.keys(tiers).forEach(tier => {
+            tiers[tier].element.addEventListener('click', () => {
+                // Deselect all tiers
+                Object.values(tiers).forEach(t => {
+                    t.element.classList.remove('tier-selected');
+                });
+                
+                // Select this tier
+                tiers[tier].element.classList.add('tier-selected');
+                selectedTier = tier;
+                
+                // Update hidden form values
+                document.getElementById('selected-tier').value = tier;
+                document.getElementById('donation-amount').value = tiers[tier].amount;
+                
+                // Uncheck custom amount if a tier is selected
+                document.getElementById('custom-donation-checkbox').checked = false;
+                toggleCustomAmountField(false);
+            });
+        });
+        
+        // Custom amount toggle
+        const customCheckbox = document.getElementById('custom-donation-checkbox');
+        const customAmountContainer = document.getElementById('custom-amount-container');
+        
+        function toggleCustomAmountField(show) {
+            if (show) {
+                customAmountContainer.classList.add('active');
+                
+                // Deselect all tiers
+                Object.values(tiers).forEach(t => {
+                    t.element.classList.remove('tier-selected');
+                });
+                
+                document.getElementById('selected-tier').value = 'custom';
+                
+                // Set focus on the custom amount field
+                setTimeout(() => {
+                    document.getElementById('custom-amount').focus();
+                }, 300);
+            } else {
+                customAmountContainer.classList.remove('active');
+            }
+        }
+        
+        customCheckbox.addEventListener('change', function() {
+            toggleCustomAmountField(this.checked);
+        });
+        
+        // Custom amount input handler
+        document.getElementById('custom-amount').addEventListener('input', function() {
+            const amount = parseFloat(this.value) || 0;
+            document.getElementById('donation-amount').value = amount;
+        });
+        
+        // PayPal integration
+        window.paypal.Buttons({
+            style: {
+                color: 'blue',
+                shape: 'rect',
+                layout: 'vertical'
+            },
+            
+            createOrder: function(data, actions) {
+                // Get current donation details
+                const tier = document.getElementById('selected-tier').value;
+                const amount = document.getElementById('donation-amount').value;
+                
+                // Validate amount
+                if (tier === 'custom' && (amount < 5 || isNaN(amount))) {
+                    alert('Please enter a valid donation amount (minimum $5)');
+                    return;
+                }
+                
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: amount
+                        },
+                        description: `The Up And Up Chess Club - ${tier.charAt(0).toUpperCase() + tier.slice(1)} Donation`
+                    }]
+                });
+            },
+            
+            onApprove: function(data, actions) {
+                // Show processing overlay
+                document.getElementById('processing-overlay').classList.remove('hidden');
+                
+                return actions.order.capture().then(function(orderData) {
+                    console.log('PayPal order captured:', orderData);
+                    
+                    // Get donation details from form
+                    const donationDetails = {
+                        paypal_transaction_id: orderData.id,
+                        tier: document.getElementById('selected-tier').value,
+                        amount: parseFloat(document.getElementById('donation-amount').value),
+                        donor_name: document.getElementById('donor-name').value || 'Anonymous',
+                        donor_email: document.getElementById('donor-email').value || null,
+                        notes: document.getElementById('donor-message').value || null,
+                        payment_status: 'completed',
+                        paypal_payer_id: orderData.payer ? orderData.payer.payer_id : null
+                    };
+                    
+                    console.log('Donation details to save:', donationDetails);
+                    
+                    // Save donation to Supabase
+                    return saveDonationToSupabase(donationDetails).then((result) => {
+                        console.log('Donation save result:', result);
+                        // Redirect to success page regardless of save result
+                        window.location.href = 'donation-success.html?tier=' + donationDetails.tier + '&amount=' + donationDetails.amount;
+                    });
+                }).catch(function(error) {
+                    console.error('PayPal capture error:', error);
+                    document.getElementById('processing-overlay').classList.add('hidden');
+                    alert('There was an error processing your payment. Please try again.');
+                });
+            },
+            
+            onError: function(err) {
+                // Hide processing overlay
+                document.getElementById('processing-overlay').classList.add('hidden');
+                
+                console.error('PayPal Error:', err);
+                alert('There was an error processing your donation. Please try again or contact us for assistance.');
+            }
+        }).render('#paypal-button-container');
+        
+        async function saveDonationToSupabase(donationDetails) {
+            try {
+                console.log('Saving donation to Supabase:', donationDetails);
+                
+                const { data, error } = await supabase
+                    .from('donations')
+                    .insert([donationDetails]);
+                
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+                
+                console.log('Donation saved successfully:', data);
+                
+                // Always send email notifications (admin gets notified, donor gets email if provided)
+                await sendEmailNotification(donationDetails);
+                
+                return data;
+            } catch (error) {
+                console.error('Error saving donation:', error);
+                // Show error to user
+                alert('There was an issue saving your donation details. Please contact us directly with your PayPal transaction ID: ' + donationDetails.paypal_transaction_id);
+                return null;
+            }
+        }
+        
+        async function sendEmailNotification(donationDetails) {
+            try {
+                console.log('Sending email notification for donation:', donationDetails);
+                
+                const emailData = {
+                    donor_email: donationDetails.donor_email,
+                    donor_name: donationDetails.donor_name,
+                    amount: donationDetails.amount,
+                    transaction_id: donationDetails.paypal_transaction_id,
+                    notes: donationDetails.notes
+                };
+                
+                // Call the new enhanced Supabase Edge Function for sending emails
+                const { data, error } = await supabase.functions.invoke('send-donation-emails', {
+                    body: emailData
+                });
+                
+                if (error) {
+                    console.error('Email service error:', error);
+                } else {
+                    console.log('Celebratory email notifications sent successfully:', data);
+                }
+                
+            } catch (error) {
+                console.error('Error sending email notification:', error);
+            }
+        }
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                if (this.getAttribute('href') !== '#') {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
