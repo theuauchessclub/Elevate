@@ -199,12 +199,9 @@
                             </div>
                             
                             <!-- Contact Form -->
-                            <form action="https://formsubmit.co/theuauchessclub@gmail.com" method="POST" id="contact-form">
-                                <!-- FormSubmit Configuration -->
-                                <input type="hidden" name="_subject" value="New Contact Form Message - The Up And Up Chess Club">
-                                <input type="hidden" name="_template" value="table">
-                                <input type="hidden" name="_next" value="https://theuauchessclub.com/contact.html?message=sent">
-                                <input type="hidden" name="_captcha" value="false">
+                            <form id="contact-form">
+                                <!-- Success/Error Messages -->
+                                <div id="form-messages" class="hidden mb-6"></div>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div>
@@ -290,27 +287,125 @@
         </div>
     </footer>
 
+    <!-- Supabase JavaScript SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- Contact Form JavaScript -->
     <script>
-        // Check for success message in URL
-        window.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('message') === 'sent') {
-                document.getElementById('success-message').classList.remove('hidden');
-                document.getElementById('contact-form').style.display = 'none';
-                
-                // Clean URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-        });
+        // Initialize Supabase
+        const supabaseUrl = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Form submission handling
-        document.getElementById('contact-form').addEventListener('submit', function(e) {
-            const submitButton = document.getElementById('submit-btn');
-            const originalText = submitButton.innerHTML;
+        // Handle form submission
+        document.getElementById('contact-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const formMessages = document.getElementById('form-messages');
+            const originalBtnText = submitBtn.innerHTML;
             
             // Show loading state
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            submitBtn.disabled = true;
+            formMessages.className = 'hidden mb-6';
+            
+            try {
+                // Get form data
+                const formData = new FormData(this);
+                const firstName = formData.get('first_name');
+                const lastName = formData.get('last_name');
+                const email = formData.get('email');
+                const phone = formData.get('phone');
+                const interest = formData.get('interest');
+                const message = formData.get('message');
+                
+                // Prepare data for Supabase
+                const submissionData = {
+                    name: `${firstName} ${lastName}`,
+                    email: email,
+                    phone: phone || null,
+                    subject: interest || 'General Inquiry',
+                    message: message
+                };
+                
+                // Insert into Supabase
+                const { data, error } = await supabase
+                    .from('contact_submissions')
+                    .insert([submissionData]);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log('Contact submission saved successfully:', data);
+                
+                // Send email notification
+                try {
+                    const emailResponse = await fetch('https://ukmwoeiucrtgrjyfeene.supabase.co/functions/v1/send-email-notification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            type: 'contact',
+                            data: submissionData
+                        })
+                    });
+                    
+                    const emailResult = await emailResponse.json();
+                    if (emailResult.success) {
+                        console.log('Email notification sent successfully');
+                    } else {
+                        console.error('Email notification failed:', emailResult.error);
+                    }
+                } catch (emailError) {
+                    console.error('Email notification error:', emailError);
+                    // Don't fail the form submission if email fails
+                }
+                
+                // Show success message
+                formMessages.innerHTML = `
+                    <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>Thank you!</strong> Your message has been sent successfully. We'll get back to you soon!
+                        </div>
+                    </div>
+                `;
+                formMessages.className = 'mb-6';
+                
+                // Reset form
+                this.reset();
+                
+                // Track in analytics
+                if (typeof gtag === 'function') {
+                    gtag('event', 'form_submit', {
+                        'form_name': 'contact_form',
+                        'form_location': 'contact_page'
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                
+                // Show error message
+                formMessages.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <strong>Error:</strong> There was a problem sending your message. Please try again or email us directly.
+                        </div>
+                    </div>
+                `;
+                formMessages.className = 'mb-6';
+            } finally {
+                // Reset button
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        });
             submitButton.disabled = true;
             
             // Reset after 3 seconds if something goes wrong

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registration - The Up And Up Chess Club</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Testing Registration System</h1>
+    <div id="status">Submitting test registration...</div>
+
+    <script>
+        // Initialize Supabase client
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function submitTestRegistration() {
+            try {
+                document.getElementById('status').innerHTML = 'Preparing test data...';
+                
+                // Test enrollment data
+                const enrollmentData = {
+                    student_first_name: 'Test',
+                    student_last_name: 'Student',
+                    student_age: 12,
+                    student_grade: '7th Grade',
+                    student_school: 'Test Middle School',
+                    chess_experience: 'Beginner',
+                    student_interests: 'Testing the registration system',
+                    
+                    parent_first_name: 'Test',
+                    parent_last_name: 'Parent',
+                    parent_email: 'test@example.com',
+                    parent_phone: '(555) 123-4567',
+                    address: '123 Test Street',
+                    city: 'Test City',
+                    zip: '12345',
+                    emergency_contact: 'Test Emergency Contact (555) 987-6543',
+                    
+                    program_level: 'Beginner Foundations',
+                    session_format: 'In-Person',
+                    preferred_schedule: 'Weekday Afternoons',
+                    learning_goals: 'Test the email notification system',
+                    special_considerations: 'This is a test registration',
+                    how_heard: 'System testing',
+                    
+                    terms_agreement: true,
+                    photo_consent: false,
+                    email_updates: true
+                };
+
+                document.getElementById('status').innerHTML = 'Saving to database...';
+
+                // Save to database
+                const { data, error } = await supabase
+                    .from('private_enrollments')
+                    .insert([enrollmentData])
+                    .select();
+
+                if (error) {
+                    throw new Error('Database error: ' + error.message);
+                }
+
+                console.log('Test enrollment saved successfully:', data);
+                document.getElementById('status').innerHTML = 'Saved to database! Now sending email notification...';
+
+                // Send email notification using the correct Edge Function
+                const emailResponse = await fetch('https://ukmwoeiucrtgrjyfeene.supabase.co/functions/v1/send-enrollment-emails', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        type: 'private',
+                        enrollmentData: enrollmentData
+                    })
+                });
+
+                if (emailResponse.ok) {
+                    const emailResult = await emailResponse.json();
+                    console.log('Email notification result:', emailResult);
+                    document.getElementById('status').innerHTML = `
+                        <h2 style="color: green;">✅ Test Registration Successful!</h2>
+                        <p><strong>Database:</strong> Registration saved successfully</p>
+                        <p><strong>Email System:</strong> ${emailResult.message || 'Emails sent successfully'}</p>
+                        <p><strong>Test Email:</strong> test@example.com (confirmation email sent)</p>
+                        <p><strong>Admin Email:</strong> theuauchessclub@gmail.com (admin notification sent)</p>
+                        <hr>
+                        <p><em>Check your email inbox to verify the email notifications are working correctly.</em></p>
+                    `;
+                } else {
+                    const emailError = await emailResponse.text();
+                    console.error('Email notification failed:', emailError);
+                    document.getElementById('status').innerHTML = `
+                        <h2 style="color: orange;">⚠️ Partial Success</h2>
+                        <p><strong>Database:</strong> Registration saved successfully</p>
+                        <p><strong>Email System:</strong> Failed - ${emailError}</p>
+                        <p><em>Registration was saved but email notifications may not have been sent.</em></p>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Test registration failed:', error);
+                document.getElementById('status').innerHTML = `
+                    <h2 style="color: red;">❌ Test Registration Failed</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><em>Please check the console for more details.</em></p>
+                `;
+            }
+        }
+
+        // Start the test when page loads
+        window.addEventListener('load', submitTestRegistration);
+    </script>
+</body>
+</html>

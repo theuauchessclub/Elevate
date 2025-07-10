@@ -824,8 +824,6 @@
     <!-- Supabase Script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-
-    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Supabase client
@@ -848,8 +846,6 @@
             // Session format selection
             const sessionFormats = document.querySelectorAll('.session-format');
             const sessionFormatInput = document.getElementById('session_format');
-            
-            let enrollmentData = null;
             
             sessionFormats.forEach(format => {
                 format.addEventListener('click', function() {
@@ -900,184 +896,23 @@
                     return;
                 }
                 
-                // Submit enrollment data directly
-                const studentName = `${document.getElementById('student_first_name').value} ${document.getElementById('student_last_name').value}`;
-                const parentName = `${document.getElementById('parent_first_name').value} ${document.getElementById('parent_last_name').value}`;
+                // Hide error message
+                errorDiv.style.display = 'none';
                 
-                enrollmentData = {
-                    student_first_name: document.getElementById('student_first_name').value,
-                    student_last_name: document.getElementById('student_last_name').value,
-                    student_age: parseInt(document.getElementById('student_age').value),
-                    student_grade: document.getElementById('student_grade').value,
-                    student_school: document.getElementById('student_school').value,
-                    chess_experience: document.getElementById('chess_experience').value,
-                    parent_first_name: document.getElementById('parent_first_name').value,
-                    parent_last_name: document.getElementById('parent_last_name').value,
-                    parent_email: document.getElementById('parent_email').value,
-                    parent_phone: document.getElementById('parent_phone').value,
-                    address: document.getElementById('address').value,
-                    city: document.getElementById('city').value,
-                    zip: document.getElementById('zip').value,
-                    emergency_contact: document.getElementById('emergency_contact').value,
-                    program_level: document.getElementById('program_level').value,
-                    session_format: document.getElementById('session_format').value,
-                    preferred_schedule: document.getElementById('preferred_schedule').value,
-                    learning_goals: document.getElementById('learning_goals').value,
-                    how_heard: document.getElementById('how_heard').value,
-                    terms_agreement: document.querySelector('input[name="agreement"]').checked,
-                    photo_consent: document.querySelector('input[name="photo_permission"]').checked,
-                    email_updates: document.querySelector('input[name="email_updates"]').checked
-                };
-                
-                // Submit enrollment to database
-                submitEnrollmentToDatabase();
-                
-            });
-            
-            // Function to submit enrollment data to database
-            async function submitEnrollmentToDatabase() {
-                const submitBtn = document.getElementById('submitBtn');
-                const errorDiv = document.getElementById('error-message');
-                const successMessage = document.getElementById('success-message');
+                // Disable submit button and show loading
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
                 
                 try {
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving enrollment...';
-                    
-                    // Insert enrollment data into Supabase
-                    const { data, error } = await supabase
-                        .from('private_enrollments')
-                        .insert([enrollmentData])
-                        .select();
-                        
-                    if (error) {
-                        throw error;
-                    }
-                    
-                    console.log('Enrollment saved successfully:', data);
-                    
-                    // Send confirmation emails using FormSubmit
-                    await sendConfirmationEmails(enrollmentData);
-                    
-                    // Show success message
-                    document.querySelector('.enrollment-container').style.display = 'none';
-                    successMessage.style.display = 'block';
-                    
-                    // Scroll to top
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    
-                } catch (error) {
-                    console.error('Error saving enrollment:', error);
-                    console.error('Error details:', error.message);
-                    console.error('Error code:', error.code);
-                    errorDiv.textContent = `Error saving enrollment: ${error.message || error}. Please contact us directly at theuauchessclub@gmail.com`;
-                    errorDiv.style.display = 'block';
-                    
-                    // Reset button
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Continue to Payment';
-                    submitBtn.disabled = false;
-                }
-            }
-            
-            // Email sending function
-            async function sendConfirmationEmails(enrollmentData) {
-                // Same email logic as before but now includes payment confirmation
-                const studentName = `${enrollmentData.student_first_name} ${enrollmentData.student_last_name}`;
-                const parentName = `${enrollmentData.parent_first_name} ${enrollmentData.parent_last_name}`;
-                
-                const emailMessage = `NEW PRIVATE ENROLLMENT WITH PAYMENT COMPLETED!
-
-Student: ${studentName}
-Age: ${enrollmentData.student_age}
-Grade: ${enrollmentData.student_grade}
-School: ${enrollmentData.student_school}
-Chess Experience: ${enrollmentData.chess_experience}
-
-Parent/Guardian: ${parentName}
-Email: ${enrollmentData.parent_email}
-Phone: ${enrollmentData.parent_phone}
-Address: ${enrollmentData.address}, ${enrollmentData.city} ${enrollmentData.zip}
-
-Program Details:
-• Program: ${enrollmentData.program_level}
-• Format: ${enrollmentData.session_format}
-• Schedule: ${enrollmentData.preferred_schedule}
-• Goals: ${enrollmentData.learning_goals || 'Not specified'}
-
-Payment Information:
-• Amount: $${enrollmentData.payment_amount}
-• Payment ID: ${enrollmentData.payment_id}
-• Status: ${enrollmentData.payment_status}
-• Method: ${enrollmentData.payment_method}
-
-Contact them to schedule the first session!`;
-
-                // Send to parent/guardian
-                const parentFormData = new FormData();
-                parentFormData.append('name', 'The Up And Up Chess Club');
-                parentFormData.append('email', 'theuauchessclub@gmail.com');
-                parentFormData.append('_subject', `Private Chess Instruction - Payment Confirmed - ${studentName}`);
-                parentFormData.append('message', emailMessage);
-                parentFormData.append('_template', 'box');
-                parentFormData.append('_captcha', 'false');
-                parentFormData.append('_cc', 'hall.truth@gmail.com');
-                parentFormData.append('_autoresponse', `Dear ${parentName},
-
-Thank you for your payment! Your enrollment for ${studentName} is now confirmed.
-
-📋 PAYMENT CONFIRMATION
-Your payment of $${enrollmentData.payment_amount} has been successfully processed via PayPal.
-Payment ID: ${enrollmentData.payment_id}
-
-🎯 PROGRAM DETAILS
-• Program: ${enrollmentData.program_level}
-• Format: ${enrollmentData.session_format}
-• Student: ${studentName}
-
-📞 NEXT STEPS
-• Truth Hall will contact you within 24 hours to schedule the first session
-• You will receive program materials and preparation information
-• Welcome to The Up And Up Chess Club family!
-
-📧 QUESTIONS?
-If you have any questions, please contact us:
-• Email: theuauchessclub@gmail.com
-• Phone: (240) 360-0809
-
-Best regards,
-Truth Hall & The Chess Club Team`);
-
-                try {
-                    const parentResponse = await fetch(`https://formsubmit.co/ajax/${enrollmentData.parent_email}`, {
-                        method: 'POST',
-                        body: parentFormData
-                    });
-                    
-                    const parentResult = await parentResponse.json();
-                    if (parentResult.success) {
-                        console.log('Confirmation email sent successfully');
-                    }
-                } catch (emailError) {
-                    console.error('Email sending error:', emailError);
-                }
-            }
-            
-            // Program/format change listeners to update pricing
-            programCards.forEach(card => {
-                card.addEventListener('click', updatePricingDisplay);
-            });
-            
-            sessionFormats.forEach(format => {
-                format.addEventListener('click', updatePricingDisplay);
-            });
-        });
-    </script>
-</body>
-</html>
+                    // Collect form data
+                    const enrollmentData = {
+                        student_first_name: document.getElementById('student_first_name').value,
+                        student_last_name: document.getElementById('student_last_name').value,
                         student_age: parseInt(document.getElementById('student_age').value),
                         student_grade: document.getElementById('student_grade').value,
                         student_school: document.getElementById('student_school').value,
                         chess_experience: document.getElementById('chess_experience').value,
-                        student_interests: document.getElementById('student_interests').value,
+                        student_interests: document.getElementById('student_interests').value || '',
                         
                         parent_first_name: document.getElementById('parent_first_name').value,
                         parent_last_name: document.getElementById('parent_last_name').value,
@@ -1092,8 +927,8 @@ Truth Hall & The Chess Club Team`);
                         session_format: sessionFormatInput.value,
                         preferred_schedule: document.getElementById('preferred_schedule').value,
                         learning_goals: document.getElementById('learning_goals').value || '',
-                        special_considerations: document.getElementById('special_considerations').value,
-                        how_heard: document.getElementById('how_heard').value,
+                        special_considerations: document.getElementById('special_considerations').value || '',
+                        how_heard: document.getElementById('how_heard').value || '',
                         
                         terms_agreement: document.querySelector('input[name="agreement"]').checked,
                         photo_consent: document.querySelector('input[name="photo_permission"]').checked,
@@ -1107,26 +942,55 @@ Truth Hall & The Chess Club Team`);
                         .select();
                     
                     if (error) {
-                        throw new Error('Database error: ' + error.message);
+                        const errorMessage = error && error.message ? error.message : error && error.toString ? error.toString() : 'Unknown database error';
+                        console.error('Database error:', errorMessage);
+                        throw new Error('Database error: ' + errorMessage);
+                    }
+                    
+                    console.log('Private enrollment saved successfully:', data);
+                    
+                    // Send email notification using the correct Edge Function
+                    try {
+                        const emailResponse = await fetch('https://ukmwoeiucrtgrjyfeene.supabase.co/functions/v1/send-enrollment-emails', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                            },
+                            body: JSON.stringify({
+                                type: 'private',
+                                enrollmentData: enrollmentData
+                            })
+                        });
+                        
+                        const emailResult = await emailResponse.json();
+                        if (emailResult && emailResult.success) {
+                            console.log('Private enrollment email notification sent successfully');
+                        } else {
+                            const emailErrorMsg = (emailResult && emailResult.error) ? emailResult.error : 'Unknown email error';
+                            console.error('Private enrollment email notification failed:', emailErrorMsg);
+                        }
+                    } catch (emailError) {
+                        const emailErrorMsg = emailError && emailError.message ? emailError.message : emailError && emailError.toString ? emailError.toString() : 'Unknown email error';
+                        console.error('Private enrollment email notification error:', emailErrorMsg);
+                        // Don't fail the form submission if email fails
                     }
                     
                     // Show success message
                     successMessage.style.display = 'block';
                     
-                    // Send confirmation email
-                    await sendConfirmationEmail(enrollmentData);
-                    
                     // Reset form
                     this.reset();
                     updateProgramBorders();
+                    
+                    // Scroll to top to show success message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                     
                     // Hide success message after 8 seconds
                     setTimeout(() => {
                         successMessage.style.opacity = '0';
                         successMessage.style.transform = 'translateX(100%)';
-                        successMessage.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                         
-                        // Actually hide it after the transition completes
                         setTimeout(() => {
                             successMessage.style.display = 'none';
                             successMessage.style.opacity = '1';
@@ -1134,14 +998,10 @@ Truth Hall & The Chess Club Team`);
                         }, 500);
                     }, 8000);
                     
-                    // Enhanced FormSubmit email confirmation
-                    await sendFormSubmitConfirmation(enrollmentData);
-                    
                 } catch (error) {
                     console.error('Error submitting enrollment:', error);
-                    console.error('Error details:', error.message);
-                    console.error('Error code:', error.code);
-                    errorDiv.textContent = `Error submitting enrollment: ${error.message || error}. Please try again or contact us directly at theuauchessclub@gmail.com`;
+                    const errorMessage = error && error.message ? error.message : error && error.toString ? error.toString() : 'Unknown error occurred';
+                    errorDiv.textContent = `Error submitting enrollment: ${errorMessage}. Please try again or contact us directly at theuauchessclub@gmail.com`;
                     errorDiv.style.display = 'block';
                 } finally {
                     // Reset submit button
@@ -1150,252 +1010,6 @@ Truth Hall & The Chess Club Team`);
                 }
             });
         });
-        
-        // Send confirmation email via EmailJS
-        async function sendConfirmationEmail(enrollmentData) {
-            // Check if EmailJS configuration is available
-            if (!window.CHESS_CLUB_EMAIL_CONFIG || !window.CHESS_CLUB_EMAIL_CONFIG.isConfigured()) {
-                console.log('EmailJS not configured, skipping direct email send');
-                return;
-            }
-
-            try {
-                const studentName = `${enrollmentData.student_first_name} ${enrollmentData.student_last_name}`;
-                const parentName = `${enrollmentData.parent_first_name} ${enrollmentData.parent_last_name}`;
-                
-                const emailContent = `Dear ${parentName},
-
-Thank you for enrolling ${studentName} in The Up And Up Chess Club!
-
-ENROLLMENT DETAILS:
-• Student: ${studentName} (Age: ${enrollmentData.student_age})
-• Program: ${enrollmentData.program_level}
-• Session Format: ${enrollmentData.session_format}
-• Preferred Schedule: ${enrollmentData.preferred_schedule}
-
-NEXT STEPS:
-We will contact you within 24 hours to:
-1. Schedule your first chess session
-2. Provide program materials and preparation information
-3. Answer any questions you may have
-
-CONTACT INFORMATION:
-• Email: theuauchessclub@gmail.com
-• Phone: (240) 360-0809
-
-We're excited to help ${enrollmentData.student_first_name} develop their chess skills and critical thinking abilities!
-
-Best regards,
-Truth Hall
-Founder & Lead Instructor
-The Up And Up Chess Club`;
-
-                // Use the centralized email configuration
-                const result = await window.CHESS_CLUB_EMAIL_CONFIG.sendEmail(
-                    parentName,
-                    enrollmentData.parent_email,
-                    'Chess Club Enrollment Confirmation',
-                    emailContent,
-                    {
-                        student_name: studentName,
-                        program: enrollmentData.program_level
-                    }
-                );
-
-                if (result.success) {
-                    console.log('EmailJS confirmation email sent successfully');
-                } else {
-                    console.error('EmailJS email failed:', result.error);
-                }
-
-            } catch (error) {
-                console.error('EmailJS error:', error);
-                // Don't throw error to avoid disrupting form submission
-            }
-        }
-
-        // Enhanced FormSubmit email confirmation
-        async function sendFormSubmitConfirmation(enrollmentData) {
-            try {
-                const studentName = `${enrollmentData.student_first_name} ${enrollmentData.student_last_name}`;
-                const parentName = `${enrollmentData.parent_first_name} ${enrollmentData.parent_last_name}`;
-                
-                // Create comprehensive email content
-                const emailMessage = `Dear ${parentName},
-
-Thank you for enrolling ${studentName} in The Up And Up Chess Club!
-
-ENROLLMENT CONFIRMATION DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-STUDENT INFORMATION:
-• Student Name: ${studentName}
-• Age: ${enrollmentData.student_age} years old
-• Current Grade: ${enrollmentData.student_grade}
-• School: ${enrollmentData.student_school}
-• Chess Experience: ${enrollmentData.chess_experience}
-
-PROGRAM DETAILS:
-• Program Level: ${enrollmentData.program_level}
-• Session Format: ${enrollmentData.session_format}
-• Preferred Schedule: ${enrollmentData.preferred_schedule}
-• Learning Goals: ${enrollmentData.learning_goals || 'Not specified'}
-
-PARENT/GUARDIAN CONTACT:
-• Name: ${parentName}
-• Email: ${enrollmentData.parent_email}
-• Phone: ${enrollmentData.parent_phone}
-• Address: ${enrollmentData.address}, ${enrollmentData.city} ${enrollmentData.zip}
-• Emergency Contact: ${enrollmentData.emergency_contact}
-
-NEXT STEPS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-We will contact you within 24 hours to:
-
-1. Schedule your first personalized chess session
-2. Provide program materials and preparation information
-3. Discuss ${enrollmentData.student_first_name}'s specific learning goals
-4. Answer any questions about our chess curriculum
-5. Set up your preferred session schedule
-
-PROGRAM BENEFITS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-${enrollmentData.student_first_name} will develop:
-• Critical thinking and problem-solving skills
-• Strategic planning abilities
-• Patience and concentration
-• Confidence and decision-making skills
-• Mathematical and analytical thinking
-
-CONTACT INFORMATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📧 Email: theuauchessclub@gmail.com
-📞 Phone: (240) 360-0809
-🌐 Website: Coming Soon
-📍 Location: Serving the greater DMV area
-
-We're excited to help ${enrollmentData.student_first_name} develop their chess skills and critical thinking abilities!
-
-Best regards,
-
-Truth Hall
-Founder & Lead Instructor
-The Up And Up Chess Club
-
-P.S. Please save our contact information and feel free to reach out with any questions before your first session!`;
-
-                // Method 1: AJAX submission to parent email (primary recipient)
-                const parentFormData = new FormData();
-                parentFormData.append('name', 'The Up And Up Chess Club');
-                parentFormData.append('email', 'theuauchessclub@gmail.com');
-                parentFormData.append('_subject', `Chess Club Enrollment Confirmation - ${studentName}`);
-                parentFormData.append('message', emailMessage);
-                parentFormData.append('_template', 'box');
-                parentFormData.append('_captcha', 'false');
-                parentFormData.append('_cc', 'hall.truth@gmail.com');
-                parentFormData.append('_autoresponse', `Dear ${parentName},
-
-Thank you for submitting your enrollment application for ${studentName}!
-
-📋 ENROLLMENT CONFIRMATION
-Your private chess instruction application has been successfully received and is being processed. We are excited about the opportunity to help ${enrollmentData.student_first_name} develop their chess skills and critical thinking abilities.
-
-🔗 REVIEW YOUR SUBMISSION
-You can review the details of your enrollment submission at any time by visiting:
-https://youware.com/chess-club-enrollment-review
-
-📞 NEXT STEPS
-• Our team will review your application within 24 hours
-• Truth Hall will contact you personally to schedule the first session
-• You will receive program materials and preparation information
-• Payment details will be provided after enrollment confirmation
-
-📧 QUESTIONS?
-If you have any questions or need to make changes to your submission, please contact us:
-• Email: theuauchessclub@gmail.com
-• Phone: (240) 360-0809
-
-Welcome to The Up And Up Chess Club family!
-
-Best regards,
-Truth Hall & The Chess Club Team`);
-
-                // Send to parent as primary recipient
-                try {
-                    const parentResponse = await fetch(`https://formsubmit.co/ajax/${enrollmentData.parent_email}`, {
-                        method: 'POST',
-                        body: parentFormData
-                    });
-                    
-                    const parentResult = await parentResponse.json();
-                    if (parentResult.success === "true") {
-                        console.log('FormSubmit confirmation email sent to parent successfully');
-                    } else {
-                        console.error('FormSubmit parent email failed:', parentResult.message);
-                    }
-                } catch (parentError) {
-                    console.error('FormSubmit parent email error:', parentError);
-                }
-
-                // Method 2: Send notification to club email
-                const clubMessage = `NEW PRIVATE ENROLLMENT RECEIVED!
-
-Student: ${studentName} (Age: ${enrollmentData.student_age})
-Parent: ${parentName}
-Email: ${enrollmentData.parent_email}
-Phone: ${enrollmentData.parent_phone}
-
-Program: ${enrollmentData.program_level}
-Format: ${enrollmentData.session_format}
-Schedule: ${enrollmentData.preferred_schedule}
-
-School: ${enrollmentData.student_school}
-Experience: ${enrollmentData.chess_experience}
-Goals: ${enrollmentData.learning_goals || 'Not specified'}
-
-Special Considerations: ${enrollmentData.special_considerations || 'None'}
-How They Heard: ${enrollmentData.how_heard}
-
-Emergency Contact: ${enrollmentData.emergency_contact}
-Address: ${enrollmentData.address}, ${enrollmentData.city} ${enrollmentData.zip}
-
-ACTION REQUIRED: Contact parent within 24 hours to schedule first session.
-
-Enrollment Time: ${new Date().toLocaleString()}`;
-
-                const clubFormData = new FormData();
-                clubFormData.append('name', parentName);
-                clubFormData.append('email', 'theuauchessclub@gmail.com');
-                clubFormData.append('_subject', `New Private Enrollment: ${studentName}`);
-                clubFormData.append('message', clubMessage);
-                clubFormData.append('_template', 'table');
-                clubFormData.append('_captcha', 'false');
-
-                // Send to club
-                try {
-                    const clubResponse = await fetch('https://formsubmit.co/ajax/theuauchessclub@gmail.com', {
-                        method: 'POST',
-                        body: clubFormData
-                    });
-                    
-                    const clubResult = await clubResponse.json();
-                    if (clubResult.success === "true") {
-                        console.log('FormSubmit club notification sent successfully');
-                    } else {
-                        console.error('FormSubmit club notification failed:', clubResult.message);
-                    }
-                } catch (clubError) {
-                    console.error('FormSubmit club notification error:', clubError);
-                }
-
-            } catch (error) {
-                console.error('FormSubmit confirmation error:', error);
-                // Don't throw error to avoid disrupting form submission
-            }
-        }
     </script>
 </body>
 </html>

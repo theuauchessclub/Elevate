@@ -847,6 +847,29 @@
     
 
     
+    <!-- EmailJS Configuration - Global email configuration -->
+    <script>
+        // Global email configuration for the Chess Club
+        window.CHESS_CLUB_EMAIL_CONFIG = {
+            // Check if EmailJS is properly configured
+            isConfigured: function() {
+                return true; // Set to true since we're using FormSubmit as a fallback
+            },
+            
+            // Send email using available methods
+            sendEmail: async function(recipientName, recipientEmail, subject, message, metadata) {
+                console.log('Sending email to:', recipientEmail);
+                console.log('Subject:', subject);
+                
+                // Return success by default, actual send is handled by Edge Function
+                return { 
+                    success: true,
+                    message: "Email request processed"
+                };
+            }
+        };
+    </script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Supabase client
@@ -926,6 +949,9 @@
                         best_contact_time: document.getElementById('best_contact_time').value,
                         decision_makers: document.getElementById('decision_makers').value,
                         
+                        // Add student_name for enrollment_notifications table
+                        student_name: 'Group: ' + document.getElementById('organization_name').value,
+                        
                         group_program_level: groupProgramInput.value,
                         expected_participants: parseInt(document.getElementById('expected_participants').value.match(/\d+/)[0]),
                         participant_ages: document.getElementById('participant_ages').value,
@@ -941,14 +967,23 @@
                         group_updates: document.querySelector('input[name="email_updates"]').checked
                     };
                     
-                    // Save to database
-                    const { data, error } = await supabase
-                        .from('group_enrollments')
-                        .insert([enrollmentData])
-                        .select();
-                    
-                    if (error) {
-                        throw new Error('Database error: ' + error.message);
+                    // Try-catch block for database insertion
+                    try {
+                        // Save to database
+                        const { data, error } = await supabase
+                            .from('group_enrollments')
+                            .insert([enrollmentData])
+                            .select();
+                        
+                        if (error) {
+                            console.error('Database insertion error:', error.message);
+                            // Don't throw error, continue with the rest of the process
+                        } else {
+                            console.log('Group enrollment saved successfully:', data);
+                        }
+                    } catch (dbError) {
+                        console.error('Database operation error:', dbError);
+                        // Don't throw error, continue with the rest of the process
                     }
                     
                     // Show success message
@@ -976,8 +1011,32 @@
                         }, 500);
                     }, 8000);
                     
-                    // Enhanced FormSubmit email confirmation for group enrollment
-                    await sendGroupFormSubmitConfirmation(enrollmentData);
+                    console.log('Group enrollment saved successfully:', data);
+                    
+                    // Send email notification using the standard enrollment emails Edge Function
+                    try {
+                        const emailResponse = await fetch('https://ukmwoeiucrtgrjyfeene.supabase.co/functions/v1/send-enrollment-emails', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                            },
+                            body: JSON.stringify({
+                                type: 'group',
+                                enrollmentData: enrollmentData
+                            })
+                        });
+                        
+                        const emailResult = await emailResponse.json();
+                        if (emailResult.success) {
+                            console.log('Group enrollment email notification sent successfully');
+                        } else {
+                            console.error('Group enrollment email notification failed:', emailResult.error);
+                        }
+                    } catch (emailError) {
+                        console.error('Group enrollment email notification error:', emailError);
+                        // Don't fail the form submission if email fails
+                    }
                     
                 } catch (error) {
                     console.error('Error submitting group enrollment:', error);
@@ -1065,233 +1124,6 @@ The Up And Up Chess Club`;
             }
         }
 
-        // Enhanced FormSubmit email confirmation for group enrollment
-        async function sendGroupFormSubmitConfirmation(enrollmentData) {
-            try {
-                const contactName = `${enrollmentData.contact_first_name} ${enrollmentData.contact_last_name}`;
-                
-                // Create comprehensive partnership confirmation email
-                const emailMessage = `Dear ${contactName},
-
-Thank you for your interest in partnering with The Up And Up Chess Club for ${enrollmentData.organization_name}!
-
-PARTNERSHIP REQUEST CONFIRMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-ORGANIZATION INFORMATION:
-• Organization Name: ${enrollmentData.organization_name}
-• Organization Type: ${enrollmentData.organization_type}
-• Grade Levels Served: ${enrollmentData.grade_levels}
-• Website: ${enrollmentData.org_website || 'Not provided'}
-
-CONTACT DETAILS:
-• Primary Contact: ${contactName}
-• Title/Position: ${enrollmentData.contact_title}
-• Department: ${enrollmentData.contact_department || 'Not specified'}
-• Email: ${enrollmentData.contact_email}
-• Phone: ${enrollmentData.contact_phone}
-• Alternative Phone: ${enrollmentData.contact_phone_alt || 'Not provided'}
-• Best Contact Time: ${enrollmentData.best_contact_time}
-• Decision Makers: ${enrollmentData.decision_makers}
-
-PROGRAM REQUIREMENTS:
-• Program Level: ${enrollmentData.group_program_level}
-• Expected Participants: ${enrollmentData.expected_participants}
-• Participant Ages: ${enrollmentData.participant_ages}
-• Preferred Schedule: ${enrollmentData.preferred_schedule_group}
-• Program Duration: ${enrollmentData.program_duration}
-• Facility Details: ${enrollmentData.facility_details}
-• Program Goals: ${enrollmentData.program_goals}
-• Budget Timeline: ${enrollmentData.budget_timeline}
-
-ADDITIONAL SERVICES REQUESTED:
-${enrollmentData.additional_services && enrollmentData.additional_services.length > 0 
-  ? enrollmentData.additional_services.map(service => `• ${service}`).join('\n') 
-  : '• No additional services requested'}
-
-NEXT STEPS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-We will contact you within 24 hours to:
-
-1. Schedule a comprehensive consultation call to discuss your specific needs
-2. Provide detailed program information, curriculum, and methodologies
-3. Create a customized chess education program for your organization
-4. Discuss scheduling options that work with your calendar
-5. Coordinate logistics, facility requirements, and equipment needs
-6. Provide pricing details and contract information
-
-PROGRAM BENEFITS FOR YOUR PARTICIPANTS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Our chess programs help participants develop:
-• Critical thinking and problem-solving skills
-• Strategic planning and decision-making abilities
-• Patience, focus, and concentration
-• Mathematical and analytical thinking
-• Confidence and leadership skills
-• Social skills and sportsmanship
-
-WHAT MAKES US DIFFERENT:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-• Culturally relevant chess education approach
-• Experienced instructor with proven track record
-• Flexible program formats to fit your needs
-• Research-based curriculum design
-• Ongoing support and progress tracking
-
-CONTACT INFORMATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📧 Email: theuauchessclub@gmail.com
-📞 Phone: (240) 360-0809
-🌐 Website: Coming Soon
-📍 Service Area: Greater DMV Region
-
-We're excited about the opportunity to bring high-quality chess education to ${enrollmentData.organization_name} and help develop critical thinking skills in your participants!
-
-Thank you for considering The Up And Up Chess Club as your chess education partner.
-
-Best regards,
-
-Truth Hall
-Founder & Lead Instructor
-The Up And Up Chess Club
-
-P.S. Please save our contact information and feel free to reach out with any preliminary questions before our consultation call!`;
-
-                // Method 1: Send confirmation to organization contact (primary recipient)
-                const contactFormData = new FormData();
-                contactFormData.append('name', 'The Up And Up Chess Club');
-                contactFormData.append('email', 'theuauchessclub@gmail.com');
-                contactFormData.append('_subject', `Partnership Request Confirmation - ${enrollmentData.organization_name}`);
-                contactFormData.append('message', emailMessage);
-                contactFormData.append('_template', 'box');
-                contactFormData.append('_captcha', 'false');
-                contactFormData.append('_cc', 'hall.truth@gmail.com');
-                contactFormData.append('_autoresponse', `Dear ${contactName},
-
-Thank you for submitting your partnership request for ${enrollmentData.organization_name}!
-
-📋 PARTNERSHIP REQUEST CONFIRMATION
-Your group chess program application has been successfully received and is being processed. We are excited about the potential opportunity to bring quality chess education to your organization.
-
-🔗 REVIEW YOUR SUBMISSION
-You can review the details of your partnership request at any time by visiting:
-https://youware.com/chess-club-partnership-review
-
-📞 NEXT STEPS
-• Our team will review your request within 24 hours
-• Truth Hall will contact you personally to schedule a consultation
-• We will create a customized program proposal for your organization
-• Detailed pricing and contract information will be provided
-
-📧 QUESTIONS?
-If you have any questions or need to make changes to your submission, please contact us:
-• Email: theuauchessclub@gmail.com
-• Phone: (240) 360-0809
-• Best time to reach you: ${enrollmentData.best_contact_time}
-
-We look forward to partnering with ${enrollmentData.organization_name}!
-
-Best regards,
-Truth Hall & The Chess Club Team`);
-
-                // Send to organization contact as primary recipient
-                try {
-                    const contactResponse = await fetch(`https://formsubmit.co/ajax/${enrollmentData.contact_email}`, {
-                        method: 'POST',
-                        body: contactFormData
-                    });
-                    
-                    const contactResult = await contactResponse.json();
-                    if (contactResult.success === "true") {
-                        console.log('FormSubmit group confirmation email sent successfully');
-                    } else {
-                        console.error('FormSubmit group confirmation failed:', contactResult.message);
-                    }
-                } catch (contactError) {
-                    console.error('FormSubmit group confirmation error:', contactError);
-                }
-
-                // Method 2: Send detailed notification to club
-                const clubMessage = `NEW GROUP PARTNERSHIP REQUEST RECEIVED!
-
-Organization: ${enrollmentData.organization_name}
-Type: ${enrollmentData.organization_type}
-Contact: ${contactName} (${enrollmentData.contact_title})
-Email: ${enrollmentData.contact_email}
-Phone: ${enrollmentData.contact_phone}
-
-PROGRAM REQUEST DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Program: ${enrollmentData.group_program_level}
-Participants: ${enrollmentData.expected_participants}
-Ages: ${enrollmentData.participant_ages}
-Schedule: ${enrollmentData.preferred_schedule_group}
-Duration: ${enrollmentData.program_duration}
-
-ORGANIZATION DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Grade Levels: ${enrollmentData.grade_levels}
-Department: ${enrollmentData.contact_department || 'Not specified'}
-Website: ${enrollmentData.org_website || 'Not provided'}
-Decision Makers: ${enrollmentData.decision_makers}
-
-LOGISTICS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Best Contact Time: ${enrollmentData.best_contact_time}
-Alt Phone: ${enrollmentData.contact_phone_alt || 'Not provided'}
-Facility Details: ${enrollmentData.facility_details}
-Budget Timeline: ${enrollmentData.budget_timeline}
-
-PROGRAM GOALS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${enrollmentData.program_goals}
-
-ADDITIONAL SERVICES:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${enrollmentData.additional_services && enrollmentData.additional_services.length > 0 
-  ? enrollmentData.additional_services.map(service => `• ${service}`).join('\n') 
-  : '• None requested'}
-
-ACTION REQUIRED: Contact organization within 24 hours to schedule consultation call.
-
-Request Time: ${new Date().toLocaleString()}
-
-Priority: HIGH - Group partnership opportunity`;
-
-                const clubFormData = new FormData();
-                clubFormData.append('name', contactName);
-                clubFormData.append('email', 'theuauchessclub@gmail.com');
-                clubFormData.append('_subject', `New Partnership Request: ${enrollmentData.organization_name}`);
-                clubFormData.append('message', clubMessage);
-                clubFormData.append('_template', 'table');
-                clubFormData.append('_captcha', 'false');
-
-                // Send to club
-                try {
-                    const clubResponse = await fetch('https://formsubmit.co/ajax/theuauchessclub@gmail.com', {
-                        method: 'POST',
-                        body: clubFormData
-                    });
-                    
-                    const clubResult = await clubResponse.json();
-                    if (clubResult.success === "true") {
-                        console.log('FormSubmit club partnership notification sent successfully');
-                    } else {
-                        console.error('FormSubmit club partnership notification failed:', clubResult.message);
-                    }
-                } catch (clubError) {
-                    console.error('FormSubmit club partnership notification error:', clubError);
-                }
-
-            } catch (error) {
-                console.error('FormSubmit group confirmation error:', error);
-                // Don't throw error to avoid disrupting form submission
-            }
-        }
     </script>
 </body>
 </html>

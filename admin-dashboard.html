@@ -4,675 +4,402 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - The Up And Up Chess Club</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
         }
         
-        .font-display {
-            font-family: 'Playfair Display', serif;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
+        .status-new { color: #ef4444; }
+        .status-contacted { color: #f59e0b; }
+        .status-resolved { color: #10b981; }
+        .status-pending { color: #ef4444; }
+        .status-enrolled { color: #10b981; }
+        .status-declined { color: #6b7280; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-
-    <!-- Password Protection Overlay -->
-    <div id="password-overlay" class="fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full mx-4">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chess-king text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-900">Chess Club Admin Dashboard</h1>
                 </div>
-                <h2 class="font-display text-3xl font-bold text-gray-900 mb-2">Admin Access</h2>
-                <p class="text-gray-600">Enter the admin password to continue</p>
+                <button id="logout-btn" class="text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Form (shown if not authenticated) -->
+    <div id="login-section" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chess-king text-white text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900">Admin Access</h2>
+                <p class="mt-2 text-gray-600">Sign in to view form submissions</p>
             </div>
             
-            <form id="password-form" class="space-y-6">
+            <form id="login-form" class="mt-8 space-y-6">
+                <div id="login-messages" class="hidden"></div>
+                
                 <div>
-                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <div class="relative">
-                        <input 
-                            type="password" 
-                            id="admin-password" 
-                            name="password"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder="Enter admin password"
-                            required
-                        >
-                        <i class="fas fa-lock absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
+                    <label for="email" class="sr-only">Email address</label>
+                    <input id="email" name="email" type="email" required class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500" placeholder="Email address">
                 </div>
                 
-                <button 
-                    type="submit" 
-                    class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                >
-                    <i class="fas fa-sign-in-alt mr-2"></i>
-                    Access Dashboard
-                </button>
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" required class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500" placeholder="Password">
+                </div>
+                
+                <div>
+                    <button type="submit" id="login-btn" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Sign in
+                    </button>
+                </div>
             </form>
-            
-            <div id="error-message" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                Incorrect password. Please try again.
-            </div>
-            
-            <div class="mt-6 text-center">
-                <a href="index.html" class="text-gray-500 hover:text-gray-700 text-sm transition-colors">
-                    <i class="fas fa-arrow-left mr-1"></i>
-                    Back to Website
-                </a>
-            </div>
         </div>
     </div>
 
-    <!-- Main Dashboard (Hidden by default) -->
-    <div id="main-dashboard" class="hidden">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg border-b">
-        <div class="container mx-auto px-4 md:px-6">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-chess-king text-white text-lg"></i>
-                    </div>
-                    <span class="font-display font-bold text-xl text-gray-900">Chess Club Admin</span>
-                </div>
-                <div class="flex items-center space-x-6">
-                    <a href="index.html" class="text-gray-600 hover:text-indigo-600 transition duration-300">
-                        <i class="fas fa-home mr-2"></i>Back to Website
-                    </a>
-                    <button id="refresh-data" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
-                    </button>
-                    <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Header Section -->
-    <section class="py-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-        <div class="container mx-auto px-4 md:px-6">
-            <h1 class="text-3xl md:text-4xl font-bold mb-4">Enrollment Management Dashboard</h1>
-            <p class="text-xl opacity-90">View and manage all enrollment submissions for The Up And Up Chess Club</p>
-        </div>
-    </section>
-
-    <!-- Stats Overview -->
-    <section class="py-8">
-        <div class="container mx-auto px-4 md:px-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+    <!-- Dashboard Content (shown if authenticated) -->
+    <div id="dashboard-section" class="hidden">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-user-graduate text-blue-600 text-xl"></i>
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <i class="fas fa-envelope text-blue-600"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-600">Total Private Enrollments</h3>
-                            <p id="private-count" class="text-2xl font-bold text-gray-900">0</p>
+                            <p class="text-sm text-gray-500">Contact Submissions</p>
+                            <p class="text-2xl font-bold text-gray-900" id="contact-count">0</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-school text-green-600 text-xl"></i>
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <i class="fas fa-user-plus text-green-600"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-600">Group Partnerships</h3>
-                            <p id="group-count" class="text-2xl font-bold text-gray-900">0</p>
+                            <p class="text-sm text-gray-500">Lesson Enrollments</p>
+                            <p class="text-2xl font-bold text-gray-900" id="enrollment-count">0</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <i class="fas fa-handshake text-purple-600"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-600">Pending Applications</h3>
-                            <p id="pending-count" class="text-2xl font-bold text-gray-900">0</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-calendar text-purple-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-600">This Week</h3>
-                            <p id="week-count" class="text-2xl font-bold text-gray-900">0</p>
+                            <p class="text-sm text-gray-500">Sponsorship Inquiries</p>
+                            <p class="text-2xl font-bold text-gray-900" id="sponsorship-count">0</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Tabs Navigation -->
-    <section class="py-4 bg-white border-b">
-        <div class="container mx-auto px-4 md:px-6">
-            <div class="flex space-x-1">
-                <button class="tab-btn active px-6 py-3 font-medium rounded-lg transition duration-300" data-tab="private">
-                    <i class="fas fa-user mr-2"></i>Private Enrollments
-                </button>
-                <button class="tab-btn px-6 py-3 font-medium rounded-lg transition duration-300" data-tab="group">
-                    <i class="fas fa-users mr-2"></i>Group Partnerships
-                </button>
-            </div>
-        </div>
-    </section>
+            <!-- Tabs -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-6">
+                        <button class="tab-btn border-b-2 border-teal-500 py-4 px-1 text-sm font-medium text-teal-600" data-tab="contacts">
+                            Contact Submissions
+                        </button>
+                        <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="enrollments">
+                            Lesson Enrollments
+                        </button>
+                        <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="sponsorships">
+                            Sponsorship Inquiries
+                        </button>
+                    </nav>
+                </div>
 
-    <!-- Content Area -->
-    <section class="py-8">
-        <div class="container mx-auto px-4 md:px-6">
-            <!-- Private Enrollments Tab -->
-            <div id="private-tab" class="tab-content active">
-                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-xl font-bold text-gray-900">Private Instruction Enrollments</h2>
-                        <p class="text-gray-600 mt-1">Individual chess lesson applications</p>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
+                <!-- Contact Submissions Tab -->
+                <div id="contacts-tab" class="tab-content p-6">
+                    <div class="table-container">
+                        <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contacts-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Lesson Enrollments Tab -->
+                <div id="enrollments-tab" class="tab-content p-6 hidden">
+                    <div class="table-container">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="private-enrollments" class="bg-white divide-y divide-gray-200">
-                                <!-- Private enrollments will be populated here -->
+                            <tbody id="enrollments-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be loaded here -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- Group Enrollments Tab -->
-            <div id="group-tab" class="tab-content">
-                <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                    <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-xl font-bold text-gray-900">Group Program Partnerships</h2>
-                        <p class="text-gray-600 mt-1">School and community organization requests</p>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
+                <!-- Sponsorship Inquiries Tab -->
+                <div id="sponsorships-tab" class="tab-content p-6 hidden">
+                    <div class="table-container">
+                        <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participants</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="group-enrollments" class="bg-white divide-y divide-gray-200">
-                                <!-- Group enrollments will be populated here -->
+                            <tbody id="sponsorships-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Data will be loaded here -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Enrollment Detail Modal -->
-    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-y-auto mx-4 w-full">
-            <div class="p-6 border-b border-gray-100">
-                <div class="flex justify-between items-center">
-                    <h3 id="modal-title" class="text-xl font-bold text-gray-900"></h3>
-                    <button id="close-modal" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-            </div>
-            <div id="modal-content" class="p-6">
-                <!-- Modal content will be populated here -->
             </div>
         </div>
     </div>
 
+    <!-- Supabase JavaScript SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Dashboard JavaScript -->
     <script>
         // Initialize Supabase
         const supabaseUrl = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Tab functionality
+        let currentUser = null;
+
+        // Check authentication status on load
+        window.addEventListener('DOMContentLoaded', async function() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                showDashboard();
+                loadDashboardData();
+            } else {
+                showLogin();
+            }
+        });
+
+        // Handle login
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loginBtn = document.getElementById('login-btn');
+            const loginMessages = document.getElementById('login-messages');
+            const originalText = loginBtn.innerHTML;
+            
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
+            loginBtn.disabled = true;
+            
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                showDashboard();
+                loadDashboardData();
+                
+            } catch (error) {
+                loginMessages.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        ${error.message}
+                    </div>
+                `;
+                loginMessages.className = 'mb-4';
+            } finally {
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Handle logout
+        document.getElementById('logout-btn').addEventListener('click', async function() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            showLogin();
+        });
+
+        // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const tabName = this.dataset.tab;
-                
-                // Update tab buttons
-                document.querySelectorAll('.tab-btn').forEach(b => {
-                    b.classList.remove('active', 'bg-indigo-100', 'text-indigo-700');
-                    b.classList.add('text-gray-600', 'hover:text-gray-900');
-                });
-                this.classList.add('active', 'bg-indigo-100', 'text-indigo-700');
-                this.classList.remove('text-gray-600', 'hover:text-gray-900');
-                
-                // Update tab content
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(tabName + '-tab').classList.add('active');
+                const tab = this.getAttribute('data-tab');
+                switchTab(tab);
             });
         });
 
-        // Load and display data
+        function showLogin() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('dashboard-section').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabName) {
+                    btn.className = 'tab-btn border-b-2 border-teal-500 py-4 px-1 text-sm font-medium text-teal-600';
+                } else {
+                    btn.className = 'tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700';
+                }
+            });
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+        }
+
         async function loadDashboardData() {
             try {
-                // Load private enrollments
-                const { data: privateData, error: privateError } = await supabase
-                    .from('private_enrollments')
+                // Load contact submissions
+                const { data: contacts, error: contactsError } = await supabase
+                    .from('contact_submissions')
                     .select('*')
-                    .order('created_at', { ascending: false });
+                    .order('submitted_at', { ascending: false });
 
-                if (privateError) throw privateError;
+                if (contactsError) throw contactsError;
 
-                // Load group enrollments
-                const { data: groupData, error: groupError } = await supabase
-                    .from('group_enrollments')
+                // Load lesson enrollments  
+                const { data: enrollments, error: enrollmentsError } = await supabase
+                    .from('lesson_enrollments')
                     .select('*')
-                    .order('created_at', { ascending: false });
+                    .order('submitted_at', { ascending: false });
 
-                if (groupError) throw groupError;
+                if (enrollmentsError) throw enrollmentsError;
 
-                // Update stats
-                updateStats(privateData, groupData);
-                
+                // Load sponsorship inquiries
+                const { data: sponsorships, error: sponsorshipsError } = await supabase
+                    .from('sponsorship_inquiries')
+                    .select('*')
+                    .order('submitted_at', { ascending: false });
+
+                if (sponsorshipsError) throw sponsorshipsError;
+
+                // Update counts
+                document.getElementById('contact-count').textContent = contacts.length;
+                document.getElementById('enrollment-count').textContent = enrollments.length;
+                document.getElementById('sponsorship-count').textContent = sponsorships.length;
+
                 // Populate tables
-                populatePrivateTable(privateData);
-                populateGroupTable(groupData);
+                populateContactsTable(contacts);
+                populateEnrollmentsTable(enrollments);
+                populateSponsorshipsTable(sponsorships);
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
-                alert('Error loading enrollment data. Please check your connection and try again.');
             }
         }
 
-        function updateStats(privateData, groupData) {
-            document.getElementById('private-count').textContent = privateData.length;
-            document.getElementById('group-count').textContent = groupData.length;
-            
-            // Count pending applications
-            const pendingPrivate = privateData.filter(item => item.status === 'pending').length;
-            const pendingGroup = groupData.filter(item => item.status === 'pending').length;
-            document.getElementById('pending-count').textContent = pendingPrivate + pendingGroup;
-            
-            // Count this week's applications
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-            const weekPrivate = privateData.filter(item => new Date(item.created_at) > oneWeekAgo).length;
-            const weekGroup = groupData.filter(item => new Date(item.created_at) > oneWeekAgo).length;
-            document.getElementById('week-count').textContent = weekPrivate + weekGroup;
-        }
-
-        function populatePrivateTable(data) {
-            const tbody = document.getElementById('private-enrollments');
+        function populateContactsTable(contacts) {
+            const tbody = document.getElementById('contacts-tbody');
             tbody.innerHTML = '';
 
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No private enrollments yet</td></tr>';
-                return;
-            }
-
-            data.forEach(enrollment => {
+            contacts.forEach(contact => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${new Date(enrollment.created_at).toLocaleDateString()}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">${enrollment.student_first_name} ${enrollment.student_last_name}</div>
-                        <div class="text-sm text-gray-500">Age ${enrollment.student_age} • ${enrollment.chess_experience}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">${enrollment.parent_first_name} ${enrollment.parent_last_name}</div>
-                        <div class="text-sm text-gray-500">${enrollment.parent_email}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${enrollment.program_level.split(' - ')[0]}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(enrollment.status)}">
-                            ${enrollment.status}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onclick="viewDetails('private', '${enrollment.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button onclick="updateStatus('private', '${enrollment.id}', '${enrollment.status}')" class="text-green-600 hover:text-green-900">
-                            <i class="fas fa-edit"></i> Update
-                        </button>
-                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${contact.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${contact.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${contact.subject || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(contact.submitted_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm status-${contact.status}">${contact.status}</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        function populateGroupTable(data) {
-            const tbody = document.getElementById('group-enrollments');
+        function populateEnrollmentsTable(enrollments) {
+            const tbody = document.getElementById('enrollments-tbody');
             tbody.innerHTML = '';
 
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No group partnerships yet</td></tr>';
-                return;
-            }
-
-            data.forEach(enrollment => {
+            enrollments.forEach(enrollment => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${new Date(enrollment.created_at).toLocaleDateString()}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">${enrollment.organization_name}</div>
-                        <div class="text-sm text-gray-500">${enrollment.organization_type}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">${enrollment.contact_first_name} ${enrollment.contact_last_name}</div>
-                        <div class="text-sm text-gray-500">${enrollment.contact_email}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${enrollment.group_program_level.split(' - ')[0]}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${enrollment.expected_participants}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(enrollment.status)}">
-                            ${enrollment.status}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onclick="viewDetails('group', '${enrollment.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button onclick="updateStatus('group', '${enrollment.id}', '${enrollment.status}')" class="text-green-600 hover:text-green-900">
-                            <i class="fas fa-edit"></i> Update
-                        </button>
-                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${enrollment.student_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${enrollment.parent_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${enrollment.lesson_type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(enrollment.submitted_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm status-${enrollment.status}">${enrollment.status}</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        function getStatusColor(status) {
-            switch(status) {
-                case 'pending': return 'bg-yellow-100 text-yellow-800';
-                case 'contacted': return 'bg-blue-100 text-blue-800';
-                case 'enrolled': return 'bg-green-100 text-green-800';
-                case 'signed': return 'bg-green-100 text-green-800';
-                case 'declined': return 'bg-red-100 text-red-800';
-                case 'proposal_sent': return 'bg-purple-100 text-purple-800';
-                case 'negotiating': return 'bg-orange-100 text-orange-800';
-                default: return 'bg-gray-100 text-gray-800';
-            }
+        function populateSponsorshipsTable(sponsorships) {
+            const tbody = document.getElementById('sponsorships-tbody');
+            tbody.innerHTML = '';
+
+            sponsorships.forEach(sponsorship => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sponsorship.contact_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sponsorship.organization || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sponsorship.sponsorship_type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(sponsorship.submitted_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm status-${sponsorship.status}">${sponsorship.status}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
-        async function viewDetails(type, id) {
-            try {
-                const tableName = type === 'private' ? 'private_enrollments' : 'group_enrollments';
-                const { data, error } = await supabase
-                    .from(tableName)
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-
-                if (error) throw error;
-
-                const modal = document.getElementById('detail-modal');
-                const title = document.getElementById('modal-title');
-                const content = document.getElementById('modal-content');
-
-                if (type === 'private') {
-                    title.textContent = `Private Enrollment: ${data.student_first_name} ${data.student_last_name}`;
-                    content.innerHTML = generatePrivateDetailsHTML(data);
-                } else {
-                    title.textContent = `Group Partnership: ${data.organization_name}`;
-                    content.innerHTML = generateGroupDetailsHTML(data);
-                }
-
-                modal.classList.remove('hidden');
-            } catch (error) {
-                console.error('Error loading details:', error);
-                alert('Error loading enrollment details.');
-            }
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         }
-
-        function generatePrivateDetailsHTML(data) {
-            return `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-bold text-lg mb-3">Student Information</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Name:</strong> ${data.student_first_name} ${data.student_last_name}</div>
-                            <div><strong>Age:</strong> ${data.student_age}</div>
-                            <div><strong>Grade:</strong> ${data.student_grade || 'Not provided'}</div>
-                            <div><strong>School:</strong> ${data.student_school || 'Not provided'}</div>
-                            <div><strong>Chess Experience:</strong> ${data.chess_experience}</div>
-                            <div><strong>Interests:</strong> ${data.student_interests || 'Not provided'}</div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h4 class="font-bold text-lg mb-3">Parent/Guardian</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Name:</strong> ${data.parent_first_name} ${data.parent_last_name}</div>
-                            <div><strong>Email:</strong> ${data.parent_email}</div>
-                            <div><strong>Phone:</strong> ${data.parent_phone}</div>
-                            <div><strong>Address:</strong> ${data.address || 'Not provided'}</div>
-                            <div><strong>City:</strong> ${data.city || 'Not provided'}</div>
-                            <div><strong>ZIP:</strong> ${data.zip || 'Not provided'}</div>
-                            <div><strong>Emergency Contact:</strong> ${data.emergency_contact}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <h4 class="font-bold text-lg mb-3">Program Details</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Program:</strong> ${data.program_level}</div>
-                            <div><strong>Preferred Schedule:</strong> ${data.preferred_schedule}</div>
-                            <div><strong>Learning Goals:</strong> ${data.learning_goals}</div>
-                            <div><strong>Special Considerations:</strong> ${data.special_considerations || 'None'}</div>
-                            <div><strong>How they heard about us:</strong> ${data.how_heard || 'Not provided'}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <h4 class="font-bold text-lg mb-3">Submission Details</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Submitted:</strong> ${new Date(data.created_at).toLocaleString()}</div>
-                            <div><strong>Status:</strong> <span class="px-2 py-1 rounded-full text-xs ${getStatusColor(data.status)}">${data.status}</span></div>
-                            <div><strong>Terms Agreement:</strong> ${data.terms_agreement ? 'Yes' : 'No'}</div>
-                            <div><strong>Photo Consent:</strong> ${data.photo_consent ? 'Yes' : 'No'}</div>
-                            <div><strong>Email Updates:</strong> ${data.email_updates ? 'Yes' : 'No'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function generateGroupDetailsHTML(data) {
-            return `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-bold text-lg mb-3">Organization</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Name:</strong> ${data.organization_name}</div>
-                            <div><strong>Type:</strong> ${data.organization_type}</div>
-                            <div><strong>Address:</strong> ${data.org_address}</div>
-                            <div><strong>City:</strong> ${data.org_city}, ${data.org_state} ${data.org_zip}</div>
-                            <div><strong>Student Population:</strong> ${data.student_population || 'Not provided'}</div>
-                            <div><strong>Grade Levels:</strong> ${data.grade_levels || 'Not provided'}</div>
-                            <div><strong>Website:</strong> ${data.org_website || 'Not provided'}</div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h4 class="font-bold text-lg mb-3">Contact Person</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Name:</strong> ${data.contact_first_name} ${data.contact_last_name}</div>
-                            <div><strong>Title:</strong> ${data.contact_title}</div>
-                            <div><strong>Department:</strong> ${data.contact_department || 'Not provided'}</div>
-                            <div><strong>Email:</strong> ${data.contact_email}</div>
-                            <div><strong>Phone:</strong> ${data.contact_phone}</div>
-                            <div><strong>Alt Phone:</strong> ${data.contact_phone_alt || 'Not provided'}</div>
-                            <div><strong>Best Contact Time:</strong> ${data.best_contact_time || 'Not specified'}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <h4 class="font-bold text-lg mb-3">Program Requirements</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Program:</strong> ${data.group_program_level}</div>
-                            <div><strong>Expected Participants:</strong> ${data.expected_participants}</div>
-                            <div><strong>Participant Ages:</strong> ${data.participant_ages}</div>
-                            <div><strong>Preferred Schedule:</strong> ${data.preferred_schedule_group}</div>
-                            <div><strong>Program Duration:</strong> ${data.program_duration || 'Not specified'}</div>
-                            <div><strong>Additional Services:</strong> ${data.additional_services ? data.additional_services.join(', ') : 'None'}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <h4 class="font-bold text-lg mb-3">Details</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Facility Details:</strong> ${data.facility_details}</div>
-                            <div><strong>Program Goals:</strong> ${data.program_goals}</div>
-                            <div><strong>Budget/Timeline:</strong> ${data.budget_timeline || 'Not provided'}</div>
-                            <div><strong>Decision Makers:</strong> ${data.decision_makers || 'Not provided'}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <h4 class="font-bold text-lg mb-3">Submission Details</h4>
-                        <div class="space-y-2 text-sm">
-                            <div><strong>Submitted:</strong> ${new Date(data.created_at).toLocaleString()}</div>
-                            <div><strong>Status:</strong> <span class="px-2 py-1 rounded-full text-xs ${getStatusColor(data.status)}">${data.status}</span></div>
-                            <div><strong>Authority Agreement:</strong> ${data.authority_agreement ? 'Yes' : 'No'}</div>
-                            <div><strong>Information Accuracy:</strong> ${data.information_accuracy ? 'Yes' : 'No'}</div>
-                            <div><strong>Follow-up Consent:</strong> ${data.follow_up_consent ? 'Yes' : 'No'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function updateStatus(type, id, currentStatus) {
-            const statuses = type === 'private' 
-                ? ['pending', 'contacted', 'enrolled', 'declined']
-                : ['pending', 'contacted', 'proposal_sent', 'negotiating', 'signed', 'declined'];
-            
-            const newStatus = prompt(`Current status: ${currentStatus}\nEnter new status (${statuses.join(', ')}):`, currentStatus);
-            
-            if (newStatus && statuses.includes(newStatus)) {
-                try {
-                    const tableName = type === 'private' ? 'private_enrollments' : 'group_enrollments';
-                    const { error } = await supabase
-                        .from(tableName)
-                        .update({ status: newStatus })
-                        .eq('id', id);
-
-                    if (error) throw error;
-
-                    // Refresh the data
-                    loadDashboardData();
-                } catch (error) {
-                    console.error('Error updating status:', error);
-                    alert('Error updating status.');
-                }
-            }
-        }
-
-        // Event listeners
-        document.getElementById('close-modal').addEventListener('click', () => {
-            document.getElementById('detail-modal').classList.add('hidden');
-        });
-
-        document.getElementById('refresh-data').addEventListener('click', loadDashboardData);
-
-        // Password Protection System
-        const ADMIN_PASSWORD = 'ChessClub2024!'; // Change this to your desired password
-        
-        document.getElementById('password-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const enteredPassword = document.getElementById('admin-password').value;
-            const errorMessage = document.getElementById('error-message');
-            
-            if (enteredPassword === ADMIN_PASSWORD) {
-                // Correct password - show dashboard
-                document.getElementById('password-overlay').style.display = 'none';
-                document.getElementById('main-dashboard').classList.remove('hidden');
-                
-                // Store authentication in session
-                sessionStorage.setItem('adminAuthenticated', 'true');
-                
-                // Initialize dashboard
-                loadDashboardData();
-            } else {
-                // Wrong password - show error
-                errorMessage.classList.remove('hidden');
-                document.getElementById('admin-password').value = '';
-                document.getElementById('admin-password').focus();
-                
-                // Hide error after 3 seconds
-                setTimeout(() => {
-                    errorMessage.classList.add('hidden');
-                }, 3000);
-            }
-        });
-
-        // Check if already authenticated
-        if (sessionStorage.getItem('adminAuthenticated') === 'true') {
-            document.getElementById('password-overlay').style.display = 'none';
-            document.getElementById('main-dashboard').classList.remove('hidden');
-            loadDashboardData();
-        }
-
-        // Focus password field on load
-        document.getElementById('admin-password').focus();
-
-        // Logout functionality
-        document.getElementById('logout-btn').addEventListener('click', function() {
-            sessionStorage.removeItem('adminAuthenticated');
-            document.getElementById('password-overlay').style.display = 'flex';
-            document.getElementById('main-dashboard').classList.add('hidden');
-            document.getElementById('admin-password').value = '';
-            document.getElementById('admin-password').focus();
-        });
     </script>
 </body>
 </html>

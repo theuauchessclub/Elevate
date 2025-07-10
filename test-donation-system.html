@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Donation System - The Up And Up Chess Club</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Testing Donation System</h1>
+    <div id="status">Submitting test donation...</div>
+
+    <script>
+        // Initialize Supabase client
+        const SUPABASE_URL = 'https://ukmwoeiucrtgrjyfeene.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrbXdvZWl1Y3J0Z3JqeWZlZW5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE0MDI3NDIsImV4cCI6MjA2Njk3ODc0Mn0.0mOo3-VVYcNM59zDFWMg_faMxqUVNHZwLKm_WwnKFdQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function submitTestDonation() {
+            try {
+                document.getElementById('status').innerHTML = 'Preparing test donation data...';
+                
+                // Test donation data (simulating successful PayPal payment)
+                const donationDetails = {
+                    paypal_transaction_id: 'TEST_' + Date.now(),
+                    tier: 'knight',
+                    amount: 100.00,
+                    donor_name: 'Sarah Wilson',
+                    donor_email: 'theuauchessclub@gmail.com', // Using club email for testing
+                    notes: 'Test donation to verify email notification system',
+                    payment_status: 'completed',
+                    paypal_payer_id: 'TEST_PAYER_ID_' + Date.now()
+                };
+
+                document.getElementById('status').innerHTML = 'Saving donation to database...';
+
+                // Save donation to database
+                const { data, error } = await supabase
+                    .from('donations')
+                    .insert([donationDetails])
+                    .select();
+
+                if (error) {
+                    throw new Error('Database error: ' + error.message);
+                }
+
+                console.log('Test donation saved successfully:', data);
+                document.getElementById('status').innerHTML = 'Saved to database! Now sending email notification...';
+
+                // Send email notification using the donation Edge Function
+                const emailData = {
+                    donor_email: donationDetails.donor_email,
+                    donor_name: donationDetails.donor_name,
+                    amount: donationDetails.amount,
+                    transaction_id: donationDetails.paypal_transaction_id,
+                    notes: donationDetails.notes
+                };
+
+                const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-donation-emails', {
+                    body: emailData
+                });
+
+                if (emailError) {
+                    console.error('Email service error:', emailError);
+                    document.getElementById('status').innerHTML = `
+                        <h2 style="color: orange;">⚠️ Partial Success</h2>
+                        <p><strong>Database:</strong> Donation saved successfully</p>
+                        <p><strong>Email System:</strong> Failed - ${emailError.message}</p>
+                        <p><em>Donation was saved but email notifications may not have been sent.</em></p>
+                    `;
+                } else {
+                    console.log('Donation email notifications sent successfully:', emailResult);
+                    document.getElementById('status').innerHTML = `
+                        <h2 style="color: green;">✅ Donation System Test Completely Successful!</h2>
+                        <p><strong>Database:</strong> Donation saved successfully</p>
+                        <p><strong>Email System:</strong> Emails sent successfully</p>
+                        <p><strong>Thank You Email:</strong> Sent to theuauchessclub@gmail.com</p>
+                        <p><strong>Admin Notification:</strong> Sent to theuauchessclub@gmail.com</p>
+                        <hr>
+                        <p><em>✅ Donation database storage and email notifications are working correctly!</em></p>
+                        <p><strong>Donor:</strong> Sarah Wilson</p>
+                        <p><strong>Amount:</strong> $100.00 (Knight Supporter)</p>
+                        <p><strong>Transaction ID:</strong> ${donationDetails.paypal_transaction_id}</p>
+                        <p><strong>Message:</strong> Test donation to verify email notification system</p>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Test donation failed:', error);
+                document.getElementById('status').innerHTML = `
+                    <h2 style="color: red;">❌ Donation Test Failed</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><em>Please check the console for more details.</em></p>
+                `;
+            }
+        }
+
+        // Start the test when page loads
+        window.addEventListener('load', submitTestDonation);
+    </script>
+</body>
+</html>
