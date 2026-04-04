@@ -190,15 +190,23 @@
   .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 
 
-  /* PHOTO STRIPS */
-  .photo-strip { display: grid; gap: 12px; padding: 0; margin: 0; overflow: hidden; }
-  .photo-strip-3 { grid-template-columns: 1fr 1.4fr 1fr; height: 280px; }
-  .photo-strip-4 { grid-template-columns: 1.2fr 1fr 1fr 1.2fr; height: 240px; }
-  .photo-strip-item { overflow: hidden; border-radius: 0; }
-  .photo-strip-item img { width: 100%; height: 100%; object-fit: cover;
-    filter: saturate(0.82) brightness(0.95) contrast(1.05) sepia(0.08);
-    transition: transform .4s ease; }
-  .photo-strip-item:hover img { transform: scale(1.04); }
+
+  /* SLIDESHOW */
+  .slideshow-wrap { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: #000; user-select: none; }
+  .slideshow { position: relative; width: 100%; height: 560px; }
+  .slide { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+  .slide.active { opacity: 1; }
+  .slide img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.85) brightness(0.88) contrast(1.06) sepia(0.07); }
+  .slide-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 28px; background: linear-gradient(transparent, rgba(13,27,42,0.85)); color: rgba(255,255,255,0.9); font-size: 0.88rem; font-style: italic; letter-spacing: 0.01em; }
+  .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(13,27,42,0.6); border: 1px solid rgba(201,168,76,0.4); color: var(--gold-light); font-size: 2rem; line-height: 1; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; z-index: 10; backdrop-filter: blur(4px); }
+  .slide-btn:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+  .slide-prev { left: 16px; }
+  .slide-next { right: 16px; }
+  .slide-dots { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; z-index: 10; }
+  .slide-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all .2s; border: none; padding: 0; }
+  .slide-dot.active { background: var(--gold); transform: scale(1.3); }
+  .slide-counter { position: absolute; top: 16px; right: 20px; background: rgba(13,27,42,0.6); color: var(--gold-light); font-size: 0.78rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; z-index: 10; backdrop-filter: blur(4px); }
+  @media (max-width: 900px) { .slideshow { height: 320px; } .slide-caption { font-size: 0.78rem; padding: 14px 18px; } }
   @media (max-width: 900px) {
     .hero { grid-template-columns: 1fr; }
     .hero-image { display: none; }
@@ -210,7 +218,6 @@
     .gallery-grid { grid-template-columns: 1fr 1fr; grid-auto-rows: 160px; }
     .gallery-item.gi-tall { grid-row: span 1; }
     .gallery-item.gi-wide { grid-column: span 2; }
-    .photo-strip-3, .photo-strip-4 { grid-template-columns: 1fr 1fr; height: 180px; }
     .footer-grid { grid-template-columns: 1fr; }
     .nav-links { display: none; }
     .form-row { grid-template-columns: 1fr; }
@@ -260,13 +267,6 @@
 </section>
 
 
-<!-- PHOTO STRIP 1 — after hero -->
-<div class="photo-strip photo-strip-4">
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=500&q=85" alt="Chess instruction"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1614107151491-6876eecbff89?w=600&q=85" alt="Tournament players"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1528819622765-d6bcf132f793?w=500&q=85" alt="Young chess player"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1580541832626-2a7131ee809f?w=500&q=85" alt="Chess pieces"></div>
-</div>
 
 <!-- ABOUT -->
 <section class="about-strip" id="about">
@@ -302,9 +302,8 @@
       <div class="program-icon">♟</div>
       <div class="program-duration">1 Month · 4 Sessions</div>
       <div class="program-title">Private Essentials</div>
-      <div class="program-price-old">Was $349</div>
-      <div class="program-price">$305</div>
-      <div class="program-price-tag">Virtual Rate</div>
+      <div class="program-price">$300 <span style="font-size:0.9rem;font-weight:400;color:var(--slate)">/ program</span></div>
+      <div style="font-size:0.82rem;color:var(--gold);font-weight:600;margin-bottom:10px">$75 per session avg</div>
       <p class="program-desc">Perfect for beginners. Build a strong foundation in rules, strategy, and love of the game.</p>
       <ul class="program-features">
         <li class="program-feature">4 weekly virtual sessions (Zoom)</li>
@@ -313,16 +312,15 @@
         <li class="program-feature">USCF enrollment</li>
         <li class="program-feature">Progress tracking</li>
       </ul>
-      <button class="btn-book" data-program="Private Essentials" data-price="305" data-deposit="100">Book This Program</button>
+      <button class="btn-book" data-program="Private Essentials" data-price="300" data-deposit="100">Book This Program</button>
     </div>
     <div class="program-card featured">
       <div class="featured-badge">POPULAR</div>
       <div class="program-icon">♛</div>
       <div class="program-duration">3 Months · 12 Sessions</div>
       <div class="program-title">Private Master</div>
-      <div class="program-price-old" style="color:rgba(255,255,255,0.45)">Was $698</div>
-      <div class="program-price">$611</div>
-      <div class="program-price-tag">Virtual Rate</div>
+      <div class="program-price">$600 <span style="font-size:0.9rem;font-weight:400;color:rgba(255,255,255,0.5)">/ program</span></div>
+      <div style="font-size:0.82rem;color:var(--gold);font-weight:600;margin-bottom:10px">$50 per session avg</div>
       <p class="program-desc">Complete transformation. All 5 chapters, advanced tactics, and tournament preparation.</p>
       <ul class="program-features">
         <li class="program-feature">12 weekly virtual sessions (Zoom)</li>
@@ -331,15 +329,14 @@
         <li class="program-feature">Tournament prep</li>
         <li class="program-feature">All Essentials bonuses</li>
       </ul>
-      <button class="btn-book" data-program="Private Master" data-price="611" data-deposit="150">Book This Program</button>
+      <button class="btn-book" data-program="Private Master" data-price="600" data-deposit="150">Book This Program</button>
     </div>
     <div class="program-card">
       <div class="program-icon">♚</div>
       <div class="program-duration">6 Months · 24 Sessions</div>
       <div class="program-title">Private Elite</div>
-      <div class="program-price-old">Was $1,396</div>
-      <div class="program-price">$1,222</div>
-      <div class="program-price-tag">Virtual Rate</div>
+      <div class="program-price">$1,200 <span style="font-size:0.9rem;font-weight:400;color:var(--slate)">/ program</span></div>
+      <div style="font-size:0.82rem;color:var(--gold);font-weight:600;margin-bottom:10px">$50 per session avg</div>
       <p class="program-desc">Elite mastery. Competition training, monthly tournament entry, and leadership development.</p>
       <ul class="program-features">
         <li class="program-feature">24 weekly virtual sessions (Zoom)</li>
@@ -348,7 +345,7 @@
         <li class="program-feature">Personal mentorship</li>
         <li class="program-feature">Leadership development</li>
       </ul>
-      <button class="btn-book" data-program="Private Elite" data-price="1222" data-deposit="200">Book This Program</button>
+      <button class="btn-book" data-program="Private Elite" data-price="1200" data-deposit="200">Book This Program</button>
     </div>
   </div>
 
@@ -381,12 +378,6 @@
 </section>
 
 
-<!-- PHOTO STRIP 2 — between programs and benefits -->
-<div class="photo-strip photo-strip-3">
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1609765368860-baa66d0c75b1?w=600&q=85" alt="Chess game in progress"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=700&q=85" alt="Group chess session"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1560174038-da43ac74f01b?w=600&q=85" alt="Chess board detail"></div>
-</div>
 
 <!-- BENEFITS -->
 <section class="benefits" id="benefits">
@@ -420,26 +411,43 @@
 </section>
 
 
-<!-- PHOTO STRIP 3 — between testimonials and gallery -->
-<div class="photo-strip photo-strip-4">
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1555597673-b21d5c935865?w=500&q=85" alt="Chess clock timer"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1596379910879-de63fa4f7e7c?w=500&q=85" alt="Chess knight"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1531904563474-71ee5b02524a?w=500&q=85" alt="Chess concentration"></div>
-  <div class="photo-strip-item"><img src="https://images.unsplash.com/photo-1537498425277-c283d32ef9db?w=500&q=85" alt="Chess outdoors"></div>
-</div>
 
 <!-- GALLERY -->
 <section class="gallery" id="gallery">
   <div class="section-header">
     <span class="section-label">In Action</span>
-    <h2 class="section-title">Inside the Up & Up Chess Club</h2>
+    <h2 class="section-title">Inside the Up &amp; Up Chess Club</h2>
   </div>
-  <div class="gallery-grid">
-    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1528819622765-d6bcf132f793?w=800&q=80" alt="Chess coaching"></div>
-    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1580541832626-2a7131ee809f?w=500&q=80" alt="Chess pieces"></div>
-    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1586165368502-1bad197a6461?w=500&q=80" alt="Chess strategy"></div>
-    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1560174038-da43ac74f01b?w=500&q=80" alt="Chess board"></div>
-    <div class="gallery-item"><img src="https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?w=500&q=80" alt="Chess focus"></div>
+
+  <div class="slideshow-wrap">
+    <div class="slideshow" id="gallerySlideshow">
+      <div class="slide active"><img src="https://images.unsplash.com/photo-1528819622765-d6bcf132f793?w=1200&q=90" alt="Young student focused at chess board"><div class="slide-caption">Focused play — developing strategic thinking one move at a time</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1614107151491-6876eecbff89?w=1200&q=90" alt="Chess tournament competition hall"><div class="slide-caption">Tournament competition — where preparation meets opportunity</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1580541832626-2a7131ee809f?w=1200&q=90" alt="Chess pieces lined up"><div class="slide-caption">The pieces of the game — each with its own power and purpose</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=1200&q=90" alt="Chess coaching session"><div class="slide-caption">One-on-one coaching — personalized instruction for every student</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1586165368502-1bad197a6461?w=1200&q=90" alt="Chess strategy planning"><div class="slide-caption">Strategic planning — building problem-solving skills for life</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1609765368860-baa66d0c75b1?w=1200&q=90" alt="Chess game in progress"><div class="slide-caption">Game in progress — critical thinking in real time</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1560174038-da43ac74f01b?w=1200&q=90" alt="Chess board close up"><div class="slide-caption">The board — 64 squares of infinite possibility</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1596379910879-de63fa4f7e7c?w=1200&q=90" alt="Chess knight piece detail"><div class="slide-caption">The knight — the most creative piece on the board</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?w=1200&q=90" alt="Player in deep concentration"><div class="slide-caption">Deep concentration — the hallmark of a serious chess student</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1555597673-b21d5c935865?w=1200&q=90" alt="Chess clock tournament game"><div class="slide-caption">Tournament clock — managing time is part of mastering chess</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1200&q=90" alt="Group chess session"><div class="slide-caption">Group session — learning together builds community and confidence</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1531904563474-71ee5b02524a?w=1200&q=90" alt="Chess match concentration"><div class="slide-caption">Match day — putting months of practice to the test</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1522576098-d524c3e0e68d?w=1200&q=90" alt="Chess pieces on board mid-game"><div class="slide-caption">Mid-game complexity — where champions are made</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=90" alt="Student learning chess moves"><div class="slide-caption">Learning the moves — every grandmaster started here</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1537498425277-c283d32ef9db?w=1200&q=90" alt="Chess game outdoors"><div class="slide-caption">Chess everywhere — the game that travels with you</div></div>
+      <div class="slide"><img src="https://images.unsplash.com/photo-1583521214690-73421a1829a9?w=1200&q=90" alt="Chess pieces strategic view"><div class="slide-caption">The endgame — precision, patience, and perfect execution</div></div>
+    </div>
+
+    <!-- Controls -->
+    <button class="slide-btn slide-prev" onclick="moveSlide(-1)" aria-label="Previous">&#8249;</button>
+    <button class="slide-btn slide-next" onclick="moveSlide(1)" aria-label="Next">&#8250;</button>
+
+    <!-- Dots -->
+    <div class="slide-dots" id="slideDots"></div>
+
+    <!-- Counter -->
+    <div class="slide-counter"><span id="slideNum">1</span> / 16</div>
   </div>
 </section>
 
@@ -469,9 +477,9 @@
       <div class="form-group">
         <label class="form-label">Select Program</label>
         <div class="program-selector">
-          <button class="prog-btn" data-program="Private Essentials" data-price="305" data-deposit="100" onclick="selectProgram(this)"><div class="prog-name">Essentials</div><div class="prog-price">$305 · Virtual</div></button>
-          <button class="prog-btn selected" data-program="Private Master" data-price="611" data-deposit="150" onclick="selectProgram(this)"><div class="prog-name">Master ⭐</div><div class="prog-price">$611 · Virtual</div></button>
-          <button class="prog-btn" data-program="Private Elite" data-price="1222" data-deposit="200" onclick="selectProgram(this)"><div class="prog-name">Elite</div><div class="prog-price">$1,222 · Virtual</div></button>
+          <button class="prog-btn" data-program="Private Essentials" data-price="300" data-deposit="100" onclick="selectProgram(this)"><div class="prog-name">Essentials</div><div class="prog-price">$305 · Virtual</div></button>
+          <button class="prog-btn selected" data-program="Private Master" data-price="600" data-deposit="150" onclick="selectProgram(this)"><div class="prog-name">Master ⭐</div><div class="prog-price">$611 · Virtual</div></button>
+          <button class="prog-btn" data-program="Private Elite" data-price="1200" data-deposit="200" onclick="selectProgram(this)"><div class="prog-name">Elite</div><div class="prog-price">$1,222 · Virtual</div></button>
         </div>
         <div style="text-align:center;font-size:0.8rem;color:var(--slate)">Deposit required: <strong id="depositAmt" style="color:var(--navy)">$150</strong> &nbsp;·&nbsp; Balance due at first session</div>
       </div>
@@ -698,6 +706,44 @@
       setTimeout(closeQuoteModal, 2500);
     } catch(err) { showStatus('quoteStatus', 'Unable to submit. Please call (240) 360-0809 directly.', true); }
   }
+
+
+  // ── SLIDESHOW ──
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('slideDots');
+  let current = 0, timer;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Go to slide ' + (i+1));
+    dot.onclick = () => goToSlide(i);
+    dotsContainer.appendChild(dot);
+  });
+
+  function goToSlide(n) {
+    slides[current].classList.remove('active');
+    document.querySelectorAll('.slide-dot')[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.slide-dot')[current].classList.add('active');
+    document.getElementById('slideNum').textContent = current + 1;
+    resetTimer();
+  }
+
+  function moveSlide(dir) { goToSlide(current + dir); }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => goToSlide(current + 1), 5000);
+  }
+  resetTimer();
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') moveSlide(-1);
+    if (e.key === 'ArrowRight') moveSlide(1);
+  });
 
   // Program card buttons → scroll to booking
   document.querySelectorAll('.btn-book').forEach(btn => {
