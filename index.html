@@ -154,9 +154,9 @@
   .prog-btn .prog-name { font-size: 0.8rem; font-weight: 600; color: var(--navy); }
   .prog-btn .prog-price { font-size: 0.72rem; color: var(--slate); margin-top: 2px; }
   .prog-btn.selected { border-color: var(--gold); background: var(--gold-pale); }
-  .paypal-btn { width: 100%; padding: 15px; background: #0070ba; color: var(--white); border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background .2s; font-family: 'DM Sans', sans-serif; }
-  .paypal-btn:hover { background: #005ea6; }
-  .paypal-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+  .submit-btn { width: 100%; padding: 15px; background: var(--navy); color: var(--white); border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background .2s; font-family: 'DM Sans', sans-serif; }
+  .submit-btn:hover { background: var(--gold); color: var(--navy); }
+  .submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }
   .form-note { font-size: 0.78rem; color: var(--slate); text-align: center; margin-top: 14px; line-height: 1.6; }
   .confirmation { display: none; text-align: center; padding: 20px 0; }
   .confirmation-icon { width: 64px; height: 64px; border-radius: 50%; background: #eaf7ee; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
@@ -406,12 +406,12 @@
     <div class="booking-info">
       <span class="section-label">Book a Virtual Session</span>
       <h2 class="section-title">Ready to Start Your Child's Journey?</h2>
-      <p class="section-sub">Fill out the form and pay your deposit. A pre-filled PayPal invoice will open automatically. Truth confirms within 24 hours.</p>
+      <p class="section-sub">Fill out the form and submit. Truth will review your request and send a PayPal invoice directly to your email within 24 hours.</p>
       <div class="booking-steps">
         <div class="step"><div class="step-num">1</div><div><div class="step-title">Select your program</div><div class="step-desc">Choose the right virtual plan for your child's goals and schedule.</div></div></div>
         <div class="step"><div class="step-num">2</div><div><div class="step-title">Fill in your details</div><div class="step-desc">Name, contact info, student age, and preferred session times.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div><div class="step-title">Pay deposit via PayPal invoice</div><div class="step-desc">A pre-filled invoice opens automatically. No PayPal account required — debit/credit accepted.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div><div class="step-title">Truth confirms within 24 hrs</div><div class="step-desc">You'll receive a confirmation email with your Zoom link and session details.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div><div class="step-title">Receive your invoice</div><div class="step-desc">Truth reviews your request and sends a PayPal invoice directly to your email — pay when ready.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div><div class="step-title">Session confirmed!</div><div class="step-desc">Once the invoice is paid, Truth sends your Zoom link and full session details within 24 hrs.</div></div></div>
       </div>
       <div style="margin-top:36px;padding:20px 24px;background:var(--gold-pale);border:1px solid rgba(201,168,76,0.35);border-radius:var(--radius)">
         <div style="font-weight:700;color:var(--navy);margin-bottom:6px">📞 Prefer to talk first?</div>
@@ -467,16 +467,15 @@
 
       <div id="formStatus" style="display:none;padding:10px 14px;border-radius:8px;font-size:0.85rem;margin-bottom:12px;"></div>
 
-      <button class="paypal-btn" id="submitBtn" onclick="proceedToPayPal()">
-        <span style="font-size:1.1rem;font-weight:900">P</span>
-        Generate Invoice &amp; Pay Deposit
+      <button class="submit-btn" id="submitBtn" onclick="submitBooking()">
+        ♔ Submit Booking Request
       </button>
-      <p class="form-note">🔒 Your info is saved securely to our database · Deposit refundable within 48 hrs</p>
+      <p class="form-note">🔒 Your info is saved securely · Truth will email you a PayPal invoice within 24 hrs · No payment required now</p>
 
       <div class="confirmation" id="confirmation">
         <div class="confirmation-icon">✅</div>
-        <h3>Invoice Generated!</h3>
-        <p>Your booking is saved and your PayPal invoice is opening now. Truth will confirm your Zoom session within 24 hours.</p>
+        <h3>Request Received!</h3>
+        <p>Your booking request is saved. Truth will review it and send a PayPal invoice directly to your email within 24 hours. Check your inbox — and your spam folder just in case!</p>
       </div>
     </div>
   </div>
@@ -584,7 +583,7 @@
     el.textContent = msg;
   }
 
-  async function proceedToPayPal() {
+  async function submitBooking() {
     const parent = document.getElementById('parentName').value.trim();
     const student = document.getElementById('studentName').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -593,13 +592,13 @@
     const availability = document.getElementById('availability').value;
 
     if (!parent || !student || !email) {
-      showStatus('formStatus', 'Please fill in parent name, student name, and email before proceeding.', true);
+      showStatus('formStatus', '⚠️ Please fill in parent name, student name, and email before submitting.', true);
       return;
     }
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    btn.textContent = 'Saving your booking…';
+    btn.textContent = 'Submitting…';
 
     try {
       const payload = {
@@ -616,30 +615,24 @@
         status: 'pending'
       };
 
+      // Save to Supabase
       await supabaseInsert('bookings', payload);
 
-      // Email notification via Supabase Edge Function
+      // Trigger email notification + invoice draft
       fetch(`${SUPABASE_URL}/functions/v1/notify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
         body: JSON.stringify({ type: 'booking', data: payload })
       }).catch(() => {});
 
-      showStatus('formStatus', '✅ Booking saved! Opening your PayPal invoice…', false);
-
-      // Build PayPal invoice URL with pre-filled details
-      const invoiceNote = encodeURIComponent(
-        `Chess Coaching Deposit\nProgram: ${selectedProgram.name}\nStudent: ${student}\nParent: ${parent}\nEmail: ${email}\nPreferred: ${availability || 'Flexible'}\nTotal Program: $${selectedProgram.price} | Deposit: $${selectedProgram.deposit}`
-      );
-      const paypalUrl = `https://www.paypal.me/upandez/${selectedProgram.deposit}USD?note=${invoiceNote}`;
-
+      showStatus('formStatus', '✅ Booking submitted! Check your email — Truth will send your invoice within 24 hours.', false);
       document.getElementById('confirmation').style.display = 'block';
-      setTimeout(() => window.open(paypalUrl, '_blank'), 900);
+      btn.textContent = '✓ Request Submitted';
 
     } catch (err) {
-      showStatus('formStatus', 'There was an issue. Please try again or call (240) 360-0809 directly.', true);
+      showStatus('formStatus', '⚠️ There was an issue submitting. Please try again or call (240) 360-0809.', true);
       btn.disabled = false;
-      btn.innerHTML = '<span style="font-size:1.1rem;font-weight:900">P</span> Generate Invoice & Pay Deposit';
+      btn.textContent = '♔ Submit Booking Request';
     }
   }
 
