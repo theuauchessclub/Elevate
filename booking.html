@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a Session | The Up and Up Chess Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black: #0a0a0a; --black-mid: #141414; --black-soft: #1e1e1e;
+    --red: #cc2222; --red-bright: #ff3333; --red-dim: #8b1515;
+    --red-glow: rgba(204,34,34,0.12);
+    --green: #22cc66; --green-glow: rgba(34,204,102,0.1);
+    --white: #f5f5f0; --gray: #888; --gray-light: #555;
+    --border: rgba(255,255,255,0.08); --border-red: rgba(204,34,34,0.3);
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(45deg, rgba(255,255,255,0.012) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.012) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.012) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.012) 75%); background-size: 60px 60px; background-position: 0 0, 0 30px, 30px -30px, -30px 0px; pointer-events: none; z-index: 0; }
+
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.95); border-bottom: 1px solid var(--border-red); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; padding: 0 5vw; height: 64px; }
+  .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.1em; color: var(--white); text-decoration: none; }
+  .nav-logo span { color: var(--red); }
+  .nav-back { font-size: 0.82rem; font-weight: 500; letter-spacing: 0.08em; color: var(--gray); text-decoration: none; text-transform: uppercase; transition: color .2s; }
+  .nav-back:hover { color: var(--red); }
+
+  .hero { position: relative; z-index: 1; padding: 120px 5vw 50px; text-align: center; }
+  .hero-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); border: 1px solid var(--border-red); padding: 6px 16px; border-radius: 2px; margin-bottom: 20px; }
+  .hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 8vw, 6rem); letter-spacing: 0.05em; line-height: 0.95; color: var(--white); margin-bottom: 16px; }
+  .hero h1 span { color: var(--red); }
+  .hero p { font-size: 1rem; color: var(--gray); max-width: 520px; margin: 0 auto; line-height: 1.7; }
+
+  .discount-banner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto 24px; padding: 0 5vw; }
+  .discount-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .discount-pill { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; padding: 6px 14px; border-radius: 2px; border: 1px solid var(--border); color: var(--gray); background: var(--black-mid); transition: all .2s; }
+  .discount-pill.active { border-color: var(--green); color: var(--green); background: var(--green-glow); }
+
+  .booking-wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 5vw 80px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
+
+  .panel { background: var(--black-mid); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .panel-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .panel-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--red); width: 28px; height: 28px; border: 1px solid var(--border-red); display: flex; align-items: center; justify-content: center; border-radius: 2px; flex-shrink: 0; }
+  .panel-title { font-family: 'DM Mono', monospace; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white); }
+  .panel-subtitle { font-size: 0.72rem; color: var(--gray); margin-left: auto; font-family: 'DM Mono', monospace; }
+  .panel-body { padding: 24px; }
+
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cal-month { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.08em; color: var(--white); }
+  .cal-btn { background: var(--black-soft); border: 1px solid var(--border); color: var(--white); width: 32px; height: 32px; border-radius: 2px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .cal-btn:hover { border-color: var(--red); color: var(--red); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); text-align: center; padding: 4px 0 8px; }
+  .cal-day { aspect-ratio: 1; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all .15s; border: 1px solid transparent; position: relative; }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past, .cal-day.too-soon { color: var(--gray-light); cursor: not-allowed; opacity: 0.35; }
+  .cal-day.blackout { color: var(--gray-light); cursor: not-allowed; opacity: 0.25; text-decoration: line-through; }
+  .cal-day.available { color: var(--white); background: var(--black-soft); border-color: var(--border); }
+  .cal-day.available:hover { border-color: var(--red); color: var(--red); background: var(--red-glow); }
+  .cal-day.selected { background: var(--red); color: var(--white); border-color: var(--red); font-weight: 600; }
+  .cal-day.in-cart { border-color: var(--green); color: var(--green); background: var(--green-glow); }
+  .cal-day.in-cart.selected { background: var(--green); color: var(--black); border-color: var(--green); }
+  .cal-day.has-booking::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--red-dim); }
+  .cal-day.today { border-color: rgba(204,34,34,0.4); }
+
+  .slots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .slot { padding: 10px 12px; background: var(--black-soft); border: 1px solid var(--border); border-radius: 2px; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--gray); transition: all .15s; text-align: center; }
+  .slot.available { color: var(--white); }
+  .slot.available:hover { border-color: var(--red); color: var(--red); background: var(--red-glow); }
+  .slot.selected { background: var(--red); color: var(--white); border-color: var(--red); }
+  .slot.in-cart { border-color: var(--green); color: var(--green); background: var(--green-glow); cursor: not-allowed; }
+  .slot.booked { color: var(--gray-light); cursor: not-allowed; opacity: 0.4; text-decoration: line-through; }
+  .slot-label { font-size: 0.65rem; color: inherit; opacity: 0.7; display: block; }
+  .no-date-msg { text-align: center; color: var(--gray); font-size: 0.85rem; padding: 20px 0; font-family: 'DM Mono', monospace; }
+
+  .add-session-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--border-red); color: var(--red); cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.12em; border-radius: 2px; transition: all .2s; margin-top: 12px; }
+  .add-session-btn:hover:not(:disabled) { background: var(--red-glow); }
+  .add-session-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .cart-empty { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--gray); text-align: center; padding: 16px 0; }
+  .cart-item { display: flex; align-items: center; justify-content: space-between; background: var(--black-soft); border: 1px solid var(--border); border-radius: 2px; padding: 10px 14px; margin-bottom: 8px; }
+  .cart-item-info { flex: 1; }
+  .cart-item-date { font-weight: 600; font-size: 0.85rem; }
+  .cart-item-time { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .cart-item-price { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--red); margin: 0 12px; }
+  .cart-remove { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 1.1rem; padding: 2px 6px; transition: color .2s; }
+  .cart-remove:hover { color: var(--red); }
+
+  .session-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .session-card { padding: 14px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; background: var(--black-soft); transition: all .15s; }
+  .session-card:hover { border-color: var(--red); }
+  .session-card.selected { border-color: var(--red); background: var(--red-glow); }
+  .session-card-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 2px; }
+  .session-card-price { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--red); }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+  .field input, .field select { width: 100%; background: var(--black-soft); border: 1px solid var(--border); border-radius: 2px; color: var(--white); padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color .2s; appearance: none; }
+  .field input:focus, .field select:focus { border-color: var(--red); }
+  .field select option { background: var(--black-mid); }
+
+  .summary-panel { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 16px; }
+  .summary-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .summary-item:last-of-type { border-bottom: none; }
+  .summary-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); }
+  .summary-val { color: var(--white); font-weight: 500; text-align: right; font-size: 0.85rem; }
+
+  .price-section { padding: 12px 0 4px; }
+  .price-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+  .price-label { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.08em; }
+  .price-val { font-family: 'DM Mono', monospace; font-size: 0.88rem; color: var(--white); }
+  .price-val.discount { color: var(--green); }
+  .price-row.total .price-label { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.08em; color: var(--gray); }
+  .price-row.total .price-val { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--red); }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .pay-btn { padding: 12px 8px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; background: var(--black-soft); transition: all .15s; text-align: center; color: var(--white); font-size: 0.82rem; font-weight: 500; }
+  .pay-btn:hover { border-color: var(--red); }
+  .pay-btn.selected { border-color: var(--green); background: var(--green-glow); }
+  .pay-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+  .pay-handle { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--green); margin-top: 2px; }
+
+  .pay-instructions { background: var(--black-soft); border: 1px solid var(--border-red); border-radius: 2px; padding: 12px; font-size: 0.78rem; color: var(--gray); margin-bottom: 12px; line-height: 1.6; }
+
+  .pay-link-btn { display: block; width: 100%; padding: 13px; border-radius: 2px; text-align: center; text-decoration: none; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.15em; margin-bottom: 8px; transition: opacity .2s; border: none; cursor: pointer; }
+  .pay-link-cashapp { background: #00D632; color: #000; }
+  .pay-link-cashapp:hover { opacity: 0.9; }
+  .pay-link-paypal { background: #003087; color: #fff; }
+  .pay-link-paypal:hover { opacity: 0.9; }
+  .pay-link-btn.hidden { display: none; }
+
+  .book-btn { width: 100%; padding: 16px; background: var(--red); border: none; border-radius: 2px; color: var(--white); cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.15em; transition: background .2s, transform .1s; margin-top: 4px; }
+  .book-btn:hover { background: var(--red-bright); }
+  .book-btn:active { transform: scale(0.99); }
+  .book-btn:disabled { background: var(--gray-light); cursor: not-allowed; opacity: 0.5; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--black); }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--gray); font-family: 'DM Mono', monospace; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+
+  .success-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(10,10,10,0.98); align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 40px; overflow-y: auto; }
+  .success-overlay.show { display: flex; }
+  .success-icon { font-size: 4rem; margin-bottom: 20px; }
+  .success-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 0.1em; color: var(--white); margin-bottom: 12px; }
+  .success-title span { color: var(--red); }
+  .success-msg { color: var(--gray); max-width: 440px; line-height: 1.7; margin-bottom: 20px; font-size: 0.9rem; }
+  .success-payment { background: var(--black-mid); border: 1px solid var(--border-red); border-radius: 4px; padding: 24px; max-width: 380px; width: 100%; margin-bottom: 20px; }
+  .success-payment-title { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-bottom: 12px; }
+  .success-pay-amount { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--red); margin-bottom: 16px; }
+  .success-back { padding: 12px 32px; background: transparent; color: var(--white); border: 1px solid var(--border); border-radius: 2px; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.15em; transition: all .2s; }
+  .success-back:hover { border-color: var(--red); color: var(--red); }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--black-soft); border: 1px solid var(--border-red); color: var(--white); padding: 12px 24px; border-radius: 2px; font-size: 0.85rem; transition: transform .3s; z-index: 300; white-space: nowrap; max-width: 90vw; text-align: center; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .loading-slots { text-align: center; color: var(--gray); font-family: 'DM Mono', monospace; font-size: 0.78rem; padding: 16px 0; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  @media (max-width: 768px) {
+    .booking-wrap { grid-template-columns: 1fr; }
+    .summary-panel { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">UAU <span>Chess</span></a>
+  <a href="index.html" class="nav-back">← Back to Site</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">♟ Book Your Session</div>
+  <h1>ELEVATE<br><span>YOUR GAME</span></h1>
+  <p>Book multiple sessions and save — 5% off each additional session booked, up to 20% maximum discount.</p>
+</div>
+
+<div class="discount-banner">
+  <div class="discount-pills">
+    <div class="discount-pill active" id="pill1">1 Session — Full Price</div>
+    <div class="discount-pill" id="pill2">2 Sessions — Save 5%</div>
+    <div class="discount-pill" id="pill3">3 Sessions — Save 10%</div>
+    <div class="discount-pill" id="pill4">4+ Sessions — Save 20%</div>
+  </div>
+</div>
+
+<div class="booking-wrap">
+  <div style="display:flex;flex-direction:column;gap:24px;">
+
+    <!-- SESSION TYPE -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">1</div>
+        <div class="panel-title">Session Type</div>
+      </div>
+      <div class="panel-body">
+        <div class="session-grid">
+          <div class="session-card selected" data-type="Private" data-cost="70" onclick="selectSession(this)">
+            <div class="session-card-title">Private</div>
+            <div class="session-card-price">$70 / session</div>
+          </div>
+          <div class="session-card" data-type="Group" data-cost="60" onclick="selectSession(this)">
+            <div class="session-card-title">Group</div>
+            <div class="session-card-price">$60 / session</div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--gray);line-height:1.6;">All sessions are <strong style="color:var(--white)">50 minutes</strong>. Multi-session discount applies to all sessions in one booking.</div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">2</div>
+        <div class="panel-title">Select Date</div>
+        <div class="panel-subtitle" id="cartCount">0 sessions in cart</div>
+      </div>
+      <div class="panel-body">
+        <div class="cal-nav">
+          <button class="cal-btn" id="prevMonth">&#8249;</button>
+          <div class="cal-month" id="calMonth"></div>
+          <button class="cal-btn" id="nextMonth">&#8250;</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--black-soft);border:1px solid rgba(255,255,255,0.2)"></div>Available</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Viewing</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>In Cart</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--gray-light);opacity:0.5"></div>Unavailable</div>
+      </div>
+    </div>
+
+    <!-- TIME SLOTS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">3</div>
+        <div class="panel-title">Select Time</div>
+        <div class="panel-subtitle" id="selectedDateLabel">No date selected</div>
+      </div>
+      <div class="panel-body">
+        <div id="slotsContainer"><div class="no-date-msg">← Select a date on the calendar first</div></div>
+        <button class="add-session-btn" id="addSessionBtn" disabled onclick="addToCart()">+ Add This Session to Cart</button>
+      </div>
+    </div>
+
+    <!-- CART -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">4</div>
+        <div class="panel-title">Your Sessions</div>
+        <div class="panel-subtitle" id="discountLabel" style="color:var(--green);"></div>
+      </div>
+      <div class="panel-body">
+        <div id="cartContainer"><div class="cart-empty">No sessions added yet.</div></div>
+      </div>
+    </div>
+
+    <!-- YOUR INFO -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">5</div>
+        <div class="panel-title">Your Information</div>
+      </div>
+      <div class="panel-body">
+        <div class="field"><label>Student Name</label><input type="text" id="studentName" placeholder="Full name"></div>
+        <div class="field"><label>Parent / Guardian Name</label><input type="text" id="parentName" placeholder="Full name"></div>
+        <div class="field"><label>Email Address</label><input type="email" id="parentEmail" placeholder="your@email.com"></div>
+        <div class="field">
+          <label>Grade Level</label>
+          <select id="gradeLevel">
+            <option value="">Select grade</option>
+            <option>Kindergarten</option><option>1st Grade</option><option>2nd Grade</option>
+            <option>3rd Grade</option><option>4th Grade</option><option>5th Grade</option>
+            <option>6th Grade</option><option>7th Grade</option><option>8th Grade</option>
+          </select>
+        </div>
+        <div class="field"><label>Additional Notes (optional)</label><input type="text" id="notes" placeholder="Experience level, goals, preferences..."></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: SUMMARY + PAYMENT -->
+  <div class="summary-panel">
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">6</div>
+        <div class="panel-title">Order Summary</div>
+      </div>
+      <div class="panel-body">
+        <div class="summary-item"><span class="summary-label">Sessions</span><span class="summary-val" id="sumSessions">0</span></div>
+        <div class="summary-item"><span class="summary-label">Type</span><span class="summary-val" id="sumType">Private</span></div>
+        <div class="summary-item"><span class="summary-label">Duration</span><span class="summary-val">50 min each</span></div>
+        <div class="divider"></div>
+        <div class="price-section">
+          <div class="price-row"><span class="price-label">Subtotal</span><span class="price-val" id="sumSubtotal">$0</span></div>
+          <div class="price-row" id="discountRow" style="display:none;"><span class="price-label">Discount</span><span class="price-val discount" id="sumDiscount"></span></div>
+          <div class="divider"></div>
+          <div class="price-row total"><span class="price-label">Total</span><span class="price-val" id="sumTotal">$0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">7</div>
+        <div class="panel-title">Payment</div>
+      </div>
+      <div class="panel-body">
+        <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">Choose Method</div>
+        <div class="payment-grid">
+          <div class="pay-btn selected" data-method="CashApp" onclick="selectPayment(this)">
+            <span class="pay-icon">💚</span>CashApp<div class="pay-handle">$upandez</div>
+          </div>
+          <div class="pay-btn" data-method="PayPal" onclick="selectPayment(this)">
+            <span class="pay-icon">💳</span>PayPal<div class="pay-handle">@upandez</div>
+          </div>
+        </div>
+        <div class="pay-instructions" id="payInstructions">
+          Click <strong style="color:var(--white)">Pay with CashApp</strong> below to open Cash App and send payment to <strong style="color:var(--white)">$upandez</strong>. Include your student's name in the memo. Your Google Meet link will be sent once confirmed. ♟️
+        </div>
+        <a id="cashappPayBtn" href="https://cash.app/$upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-cashapp">💚 Pay with CashApp — $0</a>
+        <a id="paypalPayBtn" href="https://paypal.me/upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-paypal hidden">💳 Pay with PayPal — $0</a>
+        <div class="divider"></div>
+        <button class="book-btn" id="bookBtn" onclick="submitBooking()">♟ Confirm Booking</button>
+        <div style="text-align:center;margin-top:12px;font-size:0.72rem;color:var(--gray);line-height:1.7;">
+          48-hour minimum notice required.<br>Slots confirmed after payment received.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">♟️</div>
+  <div class="success-title">BOOKING <span>CONFIRMED</span></div>
+  <div class="success-msg" id="successMsg"></div>
+  <div class="success-payment">
+    <div class="success-payment-title">Complete Payment to Secure Your Spot</div>
+    <div class="success-pay-amount" id="successAmount">$0</div>
+    <a id="successCashApp" href="https://cash.app/$upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-cashapp" style="margin-bottom:8px;">💚 Pay with CashApp</a>
+    <a id="successPayPal" href="https://paypal.me/upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-paypal">💳 Pay with PayPal</a>
+  </div>
+  <button class="success-back" onclick="resetBooking()">Book More Sessions</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://otdyhyzghaohnhtwzkvu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90ZHloeXpnaGFvaG5odHd6a3Z1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTI0ODEsImV4cCI6MjA5MDgyODQ4MX0.BnBPg3ZLFuaw0xHXtvb_4NnF362Z73k204nhCJhNp8o';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const BLACKOUT = new Set(['2025-09-01','2025-10-09','2025-10-10','2025-10-13','2025-11-03','2025-11-11','2025-11-26','2025-11-27','2025-11-28','2025-12-22','2025-12-23','2025-12-24','2025-12-25','2025-12-26','2025-12-27','2025-12-28','2025-12-29','2025-12-30','2025-12-31','2026-01-01','2026-01-02','2026-01-19','2026-01-26','2026-02-13','2026-02-16','2026-03-12','2026-03-13','2026-04-06','2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17','2026-05-25','2026-06-16','2026-06-19','2026-07-04']);
+
+const WEEKDAY_SLOTS = [{start:'4:00 PM',end:'4:50 PM',hour:16},{start:'5:00 PM',end:'5:50 PM',hour:17},{start:'6:00 PM',end:'6:50 PM',hour:18},{start:'7:00 PM',end:'7:50 PM',hour:19}];
+const SUNDAY_SLOTS  = [{start:'9:00 AM',end:'9:50 AM',hour:9},{start:'10:00 AM',end:'10:50 AM',hour:10},{start:'11:00 AM',end:'11:50 AM',hour:11},{start:'12:00 PM',end:'12:50 PM',hour:12}];
+
+let currentYear, currentMonth, selectedDate=null, selectedSlot=null;
+let selectedType='Private', selectedCost=70, selectedPayment='CashApp';
+let cart=[], bookedSlots={};
+
+function getDiscount(n){ return n<=1?0:Math.min((n-1)*5,20); }
+function calcTotals(){
+  const count=cart.length, subtotal=cart.reduce((s,c)=>s+c.cost,0);
+  const discPct=getDiscount(count), discAmt=Math.round(subtotal*discPct/100);
+  return {count,subtotal,discPct,discAmt,total:subtotal-discAmt};
+}
+
+function updatePriceDisplay(){
+  const {count,subtotal,discPct,discAmt,total}=calcTotals();
+  document.getElementById('sumSessions').textContent=count;
+  document.getElementById('sumSubtotal').textContent=`$${subtotal}`;
+  document.getElementById('sumTotal').textContent=`$${total}`;
+  const dr=document.getElementById('discountRow');
+  if(discPct>0){dr.style.display='flex';document.getElementById('sumDiscount').textContent=`-$${discAmt} (${discPct}% off)`;}
+  else dr.style.display='none';
+  document.getElementById('cashappPayBtn').textContent=`💚 Pay with CashApp — $${total}`;
+  document.getElementById('paypalPayBtn').textContent=`💳 Pay with PayPal — $${total}`;
+  document.getElementById('cashappPayBtn').href=`https://cash.app/$upandez/${total}`;
+  document.getElementById('paypalPayBtn').href=`https://paypal.me/upandez/${total}`;
+  [1,2,3,4].forEach(n=>{
+    const pill=document.getElementById(`pill${n}`);
+    if(!pill) return;
+    const match=(n===4&&count>=4)||(n===count);
+    pill.classList.toggle('active',match||(count===0&&n===1));
+  });
+  document.getElementById('discountLabel').textContent=discPct>0?`${discPct}% discount applied ✓`:'';
+  document.getElementById('cartCount').textContent=`${count} session${count!==1?'s':''} in cart`;
+}
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  const t=new Date(); currentYear=t.getFullYear(); currentMonth=t.getMonth();
+  await loadBookedSlots(); renderCalendar(); updatePriceDisplay();
+});
+
+function dateStr(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+function formatDate(ds){return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});}
+
+async function loadBookedSlots(){
+  try{
+    const {data,error}=await sb.from('bookings').select('booking_date,booking_hour').eq('status','confirmed');
+    if(error) throw error;
+    bookedSlots={};
+    (data||[]).forEach(r=>{if(!bookedSlots[r.booking_date])bookedSlots[r.booking_date]=[];bookedSlots[r.booking_date].push(r.booking_hour);});
+  }catch(e){console.warn('Bookings load error:',e.message);}
+}
+
+function renderCalendar(){
+  const today=new Date();
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonth').textContent=`${months[currentMonth]} ${currentYear}`;
+  const grid=document.getElementById('calGrid'); grid.innerHTML='';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{const el=document.createElement('div');el.className='cal-day-label';el.textContent=d;grid.appendChild(el);});
+  const firstDay=new Date(currentYear,currentMonth,1).getDay();
+  const daysInMonth=new Date(currentYear,currentMonth+1,0).getDate();
+  const cartDates=new Set(cart.map(c=>c.date));
+  for(let i=0;i<firstDay;i++){const el=document.createElement('div');el.className='cal-day empty';grid.appendChild(el);}
+  for(let d=1;d<=daysInMonth;d++){
+    const el=document.createElement('div'); el.className='cal-day'; el.textContent=d;
+    const ds=dateStr(currentYear,currentMonth,d);
+    const date=new Date(currentYear,currentMonth,d);
+    const todayMid=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const isPast=date<todayMid, tooSoon=!isPast&&(date-today)<(48*60*60*1000);
+    const isBlackout=BLACKOUT.has(ds), isSat=date.getDay()===6;
+    const isToday=ds===dateStr(today.getFullYear(),today.getMonth(),today.getDate());
+    const inCart=cartDates.has(ds);
+    if(isToday) el.classList.add('today');
+    if(isPast||tooSoon||isBlackout||isSat){el.classList.add(isBlackout?'blackout':'past');}
+    else{
+      el.classList.add('available');
+      if(inCart) el.classList.add('in-cart');
+      if(ds===selectedDate) el.classList.add('selected');
+      if(bookedSlots[ds]&&bookedSlots[ds].length>0) el.classList.add('has-booking');
+      el.onclick=()=>selectDate(ds);
+    }
+    grid.appendChild(el);
+  }
+}
+
+document.getElementById('prevMonth').onclick=()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}renderCalendar();};
+document.getElementById('nextMonth').onclick=()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}renderCalendar();};
+
+function selectDate(ds){
+  selectedDate=ds; selectedSlot=null;
+  document.getElementById('selectedDateLabel').textContent=formatDate(ds);
+  document.getElementById('addSessionBtn').disabled=true;
+  renderCalendar(); renderSlots(ds);
+}
+
+async function renderSlots(ds){
+  const container=document.getElementById('slotsContainer');
+  container.innerHTML='<div class="loading-slots">Loading available times...</div>';
+  await loadBookedSlots();
+  const date=new Date(ds+'T12:00:00');
+  const slots=date.getDay()===0?SUNDAY_SLOTS:WEEKDAY_SLOTS;
+  const booked=bookedSlots[ds]||[];
+  const cartSlots=cart.filter(c=>c.date===ds).map(c=>c.slot.hour);
+  container.innerHTML='';
+  const grid=document.createElement('div'); grid.className='slots-grid';
+  slots.forEach(slot=>{
+    const el=document.createElement('div'); el.className='slot';
+    const isBooked=booked.includes(slot.hour), inCart=cartSlots.includes(slot.hour);
+    if(isBooked){el.classList.add('booked');el.innerHTML=`${slot.start}<span class="slot-label">Booked</span>`;}
+    else if(inCart){el.classList.add('in-cart');el.innerHTML=`${slot.start}<span class="slot-label">In Cart ✓</span>`;}
+    else{el.classList.add('available');el.innerHTML=`${slot.start}<span class="slot-label">${slot.end}</span>`;el.onclick=()=>selectSlot(el,slot);}
+    grid.appendChild(el);
+  });
+  container.appendChild(grid);
+}
+
+function selectSlot(el,slot){
+  document.querySelectorAll('.slot.selected').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected'); selectedSlot=slot;
+  document.getElementById('addSessionBtn').disabled=false;
+}
+
+function selectSession(el){
+  document.querySelectorAll('.session-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); selectedType=el.dataset.type; selectedCost=parseInt(el.dataset.cost);
+  document.getElementById('sumType').textContent=selectedType;
+  cart=cart.map(c=>({...c,type:selectedType,cost:selectedCost}));
+  renderCart(); updatePriceDisplay();
+}
+
+function selectPayment(el){
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected'); selectedPayment=el.dataset.method;
+  const cash=document.getElementById('cashappPayBtn'), pp=document.getElementById('paypalPayBtn');
+  const instr=document.getElementById('payInstructions');
+  if(selectedPayment==='CashApp'){
+    cash.classList.remove('hidden'); pp.classList.add('hidden');
+    instr.innerHTML=`Click <strong style="color:var(--white)">Pay with CashApp</strong> below to open Cash App and send to <strong style="color:var(--white)">$upandez</strong>. Include your student's name in the memo. Meet link sent after payment confirmed. ♟️`;
+  }else{
+    pp.classList.remove('hidden'); cash.classList.add('hidden');
+    instr.innerHTML=`Click <strong style="color:var(--white)">Pay with PayPal</strong> below to open PayPal and send to <strong style="color:var(--white)">@upandez</strong>. Include your student's name in the note. Meet link sent after payment confirmed. ♟️`;
+  }
+}
+
+function addToCart(){
+  if(!selectedDate||!selectedSlot) return;
+  if(cart.find(c=>c.date===selectedDate&&c.slot.hour===selectedSlot.hour)){showToast('That slot is already in your cart.');return;}
+  cart.push({date:selectedDate,slot:selectedSlot,type:selectedType,cost:selectedCost});
+  selectedSlot=null;
+  document.getElementById('addSessionBtn').disabled=true;
+  renderCart(); updatePriceDisplay(); renderCalendar(); renderSlots(selectedDate);
+}
+
+function renderCart(){
+  const container=document.getElementById('cartContainer');
+  if(cart.length===0){container.innerHTML='<div class="cart-empty">No sessions added yet. Select a date and time above.</div>';return;}
+  container.innerHTML='';
+  cart.forEach((item,idx)=>{
+    const div=document.createElement('div'); div.className='cart-item';
+    div.innerHTML=`<div class="cart-item-info"><div class="cart-item-date">${formatDate(item.date)}</div><div class="cart-item-time">${item.slot.start} – ${item.slot.end} · ${item.type}</div></div><div class="cart-item-price">$${item.cost}</div><button class="cart-remove" onclick="removeFromCart(${idx})">✕</button>`;
+    container.appendChild(div);
+  });
+}
+
+function removeFromCart(idx){
+  cart.splice(idx,1); renderCart(); updatePriceDisplay(); renderCalendar();
+  if(selectedDate) renderSlots(selectedDate);
+}
+
+async function submitBooking(){
+  const studentName=document.getElementById('studentName').value.trim();
+  const parentName=document.getElementById('parentName').value.trim();
+  const parentEmail=document.getElementById('parentEmail').value.trim();
+  const gradeLevel=document.getElementById('gradeLevel').value;
+  const notes=document.getElementById('notes').value.trim();
+  if(cart.length===0) return showToast('Add at least one session to your cart.');
+  if(!studentName) return showToast('Please enter the student name.');
+  if(!parentName)  return showToast('Please enter parent / guardian name.');
+  if(!parentEmail||!parentEmail.includes('@')) return showToast('Please enter a valid email.');
+  if(!gradeLevel)  return showToast('Please select a grade level.');
+  const btn=document.getElementById('bookBtn');
+  btn.disabled=true; btn.textContent='Processing...';
+  const {subtotal,discPct,discAmt,total}=calcTotals();
+  try{
+    for(const item of cart){
+      const {data:ex}=await sb.from('bookings').select('id').eq('booking_date',item.date).eq('booking_hour',item.slot.hour).eq('status','confirmed');
+      if(ex&&ex.length>0){showToast(`${formatDate(item.date)} at ${item.slot.start} was just booked. Please remove it.`);btn.disabled=false;btn.textContent='♟ Confirm Booking';return;}
+    }
+    const rows=cart.map(item=>({student_name:studentName,parent_name:parentName,parent_email:parentEmail,grade_level:gradeLevel,session_type:item.type,booking_date:item.date,booking_hour:item.slot.hour,booking_time:item.slot.start,cost:item.cost,discount_pct:discPct,total_cost:Math.round(item.cost*(1-discPct/100)),payment_method:selectedPayment,notes:notes||null,status:'confirmed'}));
+    const {error}=await sb.from('bookings').insert(rows);
+    if(error) throw error;
+    document.getElementById('successMsg').textContent=`${cart.length} session${cart.length>1?'s':''} confirmed for ${studentName}. A confirmation will be sent to ${parentEmail}. Complete your payment below to receive your Google Meet link${cart.length>1?'s':''}.`;
+    document.getElementById('successAmount').textContent=`$${total}`;
+    document.getElementById('successCashApp').href=`https://cash.app/$upandez/${total}`;
+    document.getElementById('successPayPal').href=`https://paypal.me/upandez/${total}`;
+    document.getElementById('successOverlay').classList.add('show');
+  }catch(err){
+    console.error(err);
+    showToast('Something went wrong. Please try again.');
+    btn.disabled=false; btn.textContent='♟ Confirm Booking';
+  }
+}
+
+function resetBooking(){
+  cart=[]; selectedDate=null; selectedSlot=null;
+  document.getElementById('successOverlay').classList.remove('show');
+  ['studentName','parentName','parentEmail','notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('gradeLevel').value='';
+  document.getElementById('slotsContainer').innerHTML='<div class="no-date-msg">← Select a date on the calendar first</div>';
+  document.getElementById('addSessionBtn').disabled=true;
+  document.getElementById('selectedDateLabel').textContent='No date selected';
+  document.getElementById('bookBtn').disabled=false;
+  document.getElementById('bookBtn').textContent='♟ Confirm Booking';
+  renderCart(); updatePriceDisplay(); loadBookedSlots().then(renderCalendar);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.className='toast show'; setTimeout(()=>t.className='toast',3500);
+}
+</script>
+</body>
+</html>
