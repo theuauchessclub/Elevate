@@ -1,6 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><script type='text/javascript' >
+const lsijVersion = 1;
+
+
+
+class Flags {
+	constructor(url, terms) {
+		this.url = url;
+		this.matched = {};
+
+		this.terms = [];
+		terms.forEach((term) => {
+			let s = term.replace(/[\]{}?^$().*\\+|[]/g, '\\$&');
+			s = s.replace(/\\\*/g, '.*');
+			s = s.replace(/\\\?/g, '.');
+			let regex = new RegExp('\\b' + s + '\\b', 'gi');
+			this.terms.push({term: term, regex: regex});
+		});
+	}
+
+	report(flags) {
+        console.debug('[LS Filter] flag report');
+		if (!flags.length)
+            return;
+
+		const xhr = new XMLHttpRequest();
+		xhr.open('POST', document.location.origin + '/10c980e7d97fd5a9b83b6dd4381ddae34e008951e961b6c0ffd2b887ded25e2d/log_flag', true);
+		console.debug('[LS Filter] sending -> ', flags);
+		xhr.send(JSON.stringify({
+			url: this.url.href,
+			flags: flags,
+			at_epoch_ms: Date.now()
+		}));
+	}
+
+	matchTerms(input, flagAll) {
+		const matches = [];
+		this.terms.forEach((term) => {
+			const hits = input.match(term.regex);
+			if (!hits || !hits.length)
+				return;
+
+			let added = false;
+			if (typeof(this.matched[term.term]) === 'undefined')
+				added = true
+
+			let count = hits.length;
+			if (!added)
+				count -= this.matched[term.term];
+
+			this.matched[term.term] = hits.length;
+
+			if (added || flagAll)
+				matches.push([term.term, count]);
+		});
+		return matches;
+	}
+
+	scanIntentValue(value) {
+		const matches = this.matchTerms(value, true);
+		const changes = [];
+		matches.forEach((match) => {
+			match[2] = true; // mark as user entered
+			changes.push(match);
+		});
+
+		if (changes.length)
+			this.report(changes);
+	}
+
+	scanIntentValues(values) {
+		values.forEach((value) => {
+			this.scanIntentValue(value);
+		});
+	}
+
+	scanIntentEvent(event) {
+		switch (event.target.tagName.toLowerCase()) {
+		case 'input':
+			let type = event.target.type || 'text';
+			type = type.toLowerCase();
+
+			// Dont scan password fields
+			if (type === 'password')
+				return;
+			this.scanIntentValue(event.target.value);
+			break;
+		case 'textarea':
+			this.scanIntentValue(event.target.value);
+			break;
+		}
+	}
+
+	scanIntent(event) {
+		if (typeof(gatherIntent) === 'function') {
+			const intent = gatherIntent();
+			if (intent.length)
+				this.scanIntentValues(intent);
+		}
+	}
+
+	onChange(event) {
+		this.scanIntentEvent(event);
+	}
+
+	onKeyup(event) {
+		this.scanIntentEvent(event);
+	}
+
+	bindDOM() {
+		document.addEventListener('change', this.onChange.bind(this));
+		document.addEventListener('keyup', this.onKeyup.bind(this));
+		setInterval(() => {
+			this.scanIntent();
+		}, 1000);
+	}
+}
+
+const initFlagScanning = function(terms) {
+	if (!terms.length)
+		return;
+
+	console.debug('[LS Filter] init flag scanning');
+	const a = document.createElement('A');
+	a.href = window.location.href;
+	const flags = new Flags(a, terms);
+	
+	console.debug('[LS Filter] flagging intent');
+	if (typeof(initGatherIntent) === 'function')
+		initGatherIntent();
+
+	flags.bindDOM();
+	
+};
+
+initFlagScanning(["bypass filters","unblock sites","Dark web","anonymous browsing","Hack","phishing","malware"]);
+
+
+
+function checkCurrentSite(yt, url) {
+  const xhr = new XMLHttpRequest();
+  const body = JSON.stringify({
+    url: url || window.location.href,
+    youtube: yt
+  });
+  console.log('[LS Filter] reporting ->', body);
+  const checkUrl = document.location.origin + '/10c980e7d97fd5a9b83b6dd4381ddae34e008951e961b6c0ffd2b887ded25e2d/log';
+  xhr.open('POST', checkUrl, true);
+  xhr.send(body);
+  xhr.onreadystatechange = function () {
+    if (this.status === 200 && xhr.responseText) {
+      const score = JSON.parse(xhr.responseText);
+      console.log('[LS Filter] score ->', score.allow);
+      if (score.redirect) {
+        window.location.href = score.redirect;
+        hardBlock();
+      }
+    }
+  };
+}
+
+let hardBlockPolicy;
+function getHardBlockPolicy() {
+  if (typeof(trustedTypes) !== 'undefined' && !hardBlockPolicy) {
+    hardBlockPolicy = trustedTypes.createPolicy('hardBlock', {
+      createHTML: (string) => string
+    });
+  }
+  return hardBlockPolicy;
+}
+
+function hardBlock() {
+  stopVideo();
+  const stopInt = setInterval(stopVideo, 500);
+  setTimeout(() => {
+    const policy = getHardBlockPolicy();
+    if (policy) {
+      document.body.innerHTML = policy.createHTML('<img src="/10c980e7d97fd5a9b83b6dd4381ddae34e008951e961b6c0ffd2b887ded25e2d/blocked-image-search.png" style="width: 100%; height: 100%">');
+    } else {
+      document.body.innerHTML = '<img src="/10c980e7d97fd5a9b83b6dd4381ddae34e008951e961b6c0ffd2b887ded25e2d/blocked-image-search.png" style="width: 100%; height: 100%">';
+    }
+    clearInterval(stopInt);
+  }, 3000)
+}
+
+function stopVideo() {
+  const ea = document.getElementsByTagName('video');
+  for (i in ea) {
+    if (typeof(ea[i].pause) !== 'function') {
+      continue;
+    }
+    if (!ea[i].paused) {
+        console.debug('[LS Filter] pause video');
+        ea[i].pause();
+    }
+  }
+}
+
+function googleVideo() {
+  if (window.location.href.match(/google\.com\/search\?/)) {
+    const vidMatcher = /google\.com\/search\?.*vid:([^#\&\?]{11})/;
+    let prevVideo;
+    new MutationObserver(function() {
+      console.log('[LS Filter] MutationObserver');
+      let video;
+      let m = window.location.href.match(vidMatcher)
+      if (m) {
+        video = m[1];
+      }
+      if (video === prevVideo) { return; }           
+      console.log('[LS Filter] scoring video ->', video);
+      prevVideo = video;
+      checkCurrentSite(true, 'https://www.youtube.com/watch?v=' + video);
+    }).observe(document, {subtree: true, childList: true});
+  }
+}
+
+function onLoad() {
+  console.log('[LS Filter] loaded');
+  if (window.top === window.self) {
+    console.log('[LS Filter] top window: ' + window.location.href);
+    googleVideo();
+  }
+}
+
+onLoad();
+
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Book a Session | The Up and Up Chess Club</title>
@@ -9,18 +236,18 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --black: #0a0a0a; --black-mid: #141414; --black-soft: #1e1e1e;
-    --red: #cc2222; --red-bright: #ff3333; --red-dim: #8b1515;
-    --red-glow: rgba(204,34,34,0.12);
-    --green: #22cc66; --green-glow: rgba(34,204,102,0.1);
-    --white: #f5f5f0; --gray: #888; --gray-light: #555;
-    --border: rgba(255,255,255,0.08); --border-red: rgba(204,34,34,0.3);
+    --black: #f4fbf8; --black-mid: #ffffff; --black-soft: #eef7f3;
+    --red: #f0a500; --red-bright: #ffc740; --red-dim: #c88a00;
+    --red-glow: rgba(240,165,0,0.12);
+    --green: #2db87a; --green-glow: rgba(45,184,122,0.12);
+    --white: #1a3a4a; --gray: #5b7280; --gray-light: #9ab0bc;
+    --border: rgba(26,58,74,0.10); --border-red: rgba(240,165,0,0.35);
   }
   html { scroll-behavior: smooth; }
   body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; overflow-x: hidden; }
-  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(45deg, rgba(255,255,255,0.012) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.012) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.012) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.012) 75%); background-size: 60px 60px; background-position: 0 0, 0 30px, 30px -30px, -30px 0px; pointer-events: none; z-index: 0; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(45deg, rgba(26,58,74,0.02) 25%, transparent 25%), linear-gradient(-45deg, rgba(26,58,74,0.02) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(26,58,74,0.02) 75%), linear-gradient(-45deg, transparent 75%, rgba(26,58,74,0.02) 75%); background-size: 60px 60px; background-position: 0 0, 0 30px, 30px -30px, -30px 0px; pointer-events: none; z-index: 0; }
 
-  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.95); border-bottom: 1px solid var(--border-red); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; padding: 0 5vw; height: 64px; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--border-red); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; padding: 0 5vw; height: 64px; }
   .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.1em; color: var(--white); text-decoration: none; }
   .nav-logo span { color: var(--red); }
   .nav-back { font-size: 0.82rem; font-weight: 500; letter-spacing: 0.08em; color: var(--gray); text-decoration: none; text-transform: uppercase; transition: color .2s; }
@@ -115,32 +342,22 @@
   .price-row.total .price-val { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--red); }
   .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
-  .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .pay-btn { padding: 12px 8px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; background: var(--black-soft); transition: all .15s; text-align: center; color: var(--white); font-size: 0.82rem; font-weight: 500; }
-  .pay-btn:hover { border-color: var(--red); }
-  .pay-btn.selected { border-color: var(--green); background: var(--green-glow); }
-  .pay-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
-  .pay-handle { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--green); margin-top: 2px; }
-
   .pay-instructions { background: var(--black-soft); border: 1px solid var(--border-red); border-radius: 2px; padding: 12px; font-size: 0.78rem; color: var(--gray); margin-bottom: 12px; line-height: 1.6; }
 
   .pay-link-btn { display: block; width: 100%; padding: 13px; border-radius: 2px; text-align: center; text-decoration: none; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.15em; margin-bottom: 8px; transition: opacity .2s; border: none; cursor: pointer; }
-  .pay-link-cashapp { background: #00D632; color: #000; }
-  .pay-link-cashapp:hover { opacity: 0.9; }
-  .pay-link-paypal { background: #003087; color: #fff; }
-  .pay-link-paypal:hover { opacity: 0.9; }
-  .pay-link-btn.hidden { display: none; }
+  .pay-link-paypal { background: var(--accent, #2db87a); color: #ffffff; }
+  .pay-link-paypal:hover { opacity: 0.92; }
 
   .book-btn { width: 100%; padding: 16px; background: var(--red); border: none; border-radius: 2px; color: var(--white); cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.15em; transition: background .2s, transform .1s; margin-top: 4px; }
   .book-btn:hover { background: var(--red-bright); }
   .book-btn:active { transform: scale(0.99); }
   .book-btn:disabled { background: var(--gray-light); cursor: not-allowed; opacity: 0.5; }
 
-  .legend { display: flex; gap: 12px; flex-wrap: wrap; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--black); }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--black-soft); }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--gray); font-family: 'DM Mono', monospace; }
   .legend-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
 
-  .success-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(10,10,10,0.98); align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 40px; overflow-y: auto; }
+  .success-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(26,58,74,0.92); align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 40px; overflow-y: auto; }
   .success-overlay.show { display: flex; }
   .success-icon { font-size: 4rem; margin-bottom: 20px; }
   .success-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 0.1em; color: var(--white); margin-bottom: 12px; }
@@ -174,14 +391,14 @@
 <div class="hero">
   <div class="hero-tag">♟ Book Your Session</div>
   <h1>ELEVATE<br><span>YOUR GAME</span></h1>
-  <p>Book multiple sessions and save — 5% off each additional session booked, up to 20% maximum discount.</p>
+  <p>Book multiple sessions and save — 10% off when you book 2 sessions, then 5% more per added session, up to 20% off for 4 or more sessions.</p>
 </div>
 
 <div class="discount-banner">
   <div class="discount-pills">
     <div class="discount-pill active" id="pill1">1 Session — Full Price</div>
-    <div class="discount-pill" id="pill2">2 Sessions — Save 5%</div>
-    <div class="discount-pill" id="pill3">3 Sessions — Save 10%</div>
+    <div class="discount-pill" id="pill2">2 Sessions — Save 10%</div>
+    <div class="discount-pill" id="pill3">3 Sessions — Save 15%</div>
     <div class="discount-pill" id="pill4">4+ Sessions — Save 20%</div>
   </div>
 </div>
@@ -310,24 +527,13 @@
         <div class="panel-title">Payment</div>
       </div>
       <div class="panel-body">
-        <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">Choose Method</div>
-        <div class="payment-grid">
-          <div class="pay-btn selected" data-method="CashApp" onclick="selectPayment(this)">
-            <span class="pay-icon">💚</span>CashApp<div class="pay-handle">$upandez</div>
-          </div>
-          <div class="pay-btn" data-method="PayPal" onclick="selectPayment(this)">
-            <span class="pay-icon">💳</span>PayPal<div class="pay-handle">@upandez</div>
-          </div>
-        </div>
-        <div class="pay-instructions" id="payInstructions">
-          Click <strong style="color:var(--white)">Pay with CashApp</strong> below to open Cash App and send payment to <strong style="color:var(--white)">$upandez</strong>. Include your student's name in the memo. Your Google Meet link will be sent once confirmed. ♟️
-        </div>
-        <a id="cashappPayBtn" href="https://cash.app/$upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-cashapp">💚 Pay with CashApp — $0</a>
-        <a id="paypalPayBtn" href="https://paypal.me/upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-paypal hidden">💳 Pay with PayPal — $0</a>
+        <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">PayPal</div>
+        <div class="pay-instructions" id="payInstructions">Click <strong style="color:var(--white)">Checkout with PayPal</strong> below to open a full cart checkout for your selected sessions. Your Google Meet link will be sent once payment is confirmed.</div>
+        <a id="paypalPayBtn" href="#" target="_blank" rel="noopener" class="pay-link-btn pay-link-paypal">💳 Checkout with PayPal — $0</a>
         <div class="divider"></div>
         <button class="book-btn" id="bookBtn" onclick="submitBooking()">♟ Confirm Booking</button>
         <div style="text-align:center;margin-top:12px;font-size:0.72rem;color:var(--gray);line-height:1.7;">
-          48-hour minimum notice required.<br>Slots confirmed after payment received.
+          48-hour minimum notice required.<br>Slots confirmed after PayPal payment is received.
         </div>
       </div>
     </div>
@@ -341,10 +547,9 @@
   <div class="success-title">BOOKING <span>CONFIRMED</span></div>
   <div class="success-msg" id="successMsg"></div>
   <div class="success-payment">
-    <div class="success-payment-title">Complete Payment to Secure Your Spot</div>
+    <div class="success-payment-title">Complete PayPal Checkout to Secure Your Spot</div>
     <div class="success-pay-amount" id="successAmount">$0</div>
-    <a id="successCashApp" href="https://cash.app/$upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-cashapp" style="margin-bottom:8px;">💚 Pay with CashApp</a>
-    <a id="successPayPal" href="https://paypal.me/upandez/0" target="_blank" rel="noopener" class="pay-link-btn pay-link-paypal">💳 Pay with PayPal</a>
+    <a id="successPayPal" href="#" target="_blank" rel="noopener" class="pay-link-btn pay-link-paypal">💳 Checkout with PayPal</a>
   </div>
   <button class="success-back" onclick="resetBooking()">Book More Sessions</button>
 </div>
@@ -356,16 +561,38 @@ const SUPABASE_URL = 'https://otdyhyzghaohnhtwzkvu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90ZHloeXpnaGFvaG5odHd6a3Z1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTI0ODEsImV4cCI6MjA5MDgyODQ4MX0.BnBPg3ZLFuaw0xHXtvb_4NnF362Z73k204nhCJhNp8o';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const PAYPAL_CHECKOUT_BASE = 'https://www.paypal.com/cgi-bin/webscr';
+const PAYPAL_BUSINESS = 'BFPLJFXUGYK7W'; // Replace with your PayPal business email or merchant ID if needed.
+
+function buildPayPalCheckoutUrl(){
+  const {count,total}=calcTotals();
+  const studentName=(document.getElementById('studentName')?.value || '').trim();
+  const sessionSummary=cart.map(item=>`${item.date} ${item.slot.start}`).join(' | ').slice(0,240);
+  const params=new URLSearchParams({
+    cmd:'_cart',
+    upload:'1',
+    business:PAYPAL_BUSINESS,
+    currency_code:'USD',
+    no_shipping:'1',
+    item_name_1:`The Up And Up Chess Club - ${count} Private Session${count!==1?'s':''}`,
+    amount_1:String(total),
+    quantity_1:'1',
+    custom:[studentName, sessionSummary].filter(Boolean).join(' — ').slice(0,255)
+  });
+  return `${PAYPAL_CHECKOUT_BASE}?${params.toString()}`;
+}
+
+
 const BLACKOUT = new Set(['2025-09-01','2025-10-09','2025-10-10','2025-10-13','2025-11-03','2025-11-11','2025-11-26','2025-11-27','2025-11-28','2025-12-22','2025-12-23','2025-12-24','2025-12-25','2025-12-26','2025-12-27','2025-12-28','2025-12-29','2025-12-30','2025-12-31','2026-01-01','2026-01-02','2026-01-19','2026-01-26','2026-02-13','2026-02-16','2026-03-12','2026-03-13','2026-04-06','2026-04-13','2026-04-14','2026-04-15','2026-04-16','2026-04-17','2026-05-25','2026-06-16','2026-06-19','2026-07-04']);
 
 const WEEKDAY_SLOTS = [{start:'4:00 PM',end:'4:50 PM',hour:16},{start:'5:00 PM',end:'5:50 PM',hour:17},{start:'6:00 PM',end:'6:50 PM',hour:18},{start:'7:00 PM',end:'7:50 PM',hour:19}];
 const SUNDAY_SLOTS  = [{start:'9:00 AM',end:'9:50 AM',hour:9},{start:'10:00 AM',end:'10:50 AM',hour:10},{start:'11:00 AM',end:'11:50 AM',hour:11},{start:'12:00 PM',end:'12:50 PM',hour:12}];
 
 let currentYear, currentMonth, selectedDate=null, selectedSlot=null;
-let selectedType='Private', selectedCost=70, selectedPayment='CashApp';
+let selectedType='Private', selectedCost=70, selectedPayment='PayPal';
 let cart=[], bookedSlots={};
 
-function getDiscount(n){ return n<=1?0:Math.min((n-1)*5,20); }
+function getDiscount(n){ if(n<=1) return 0; if(n===2) return 10; if(n===3) return 15; return 20; }
 function calcTotals(){
   const count=cart.length, subtotal=cart.reduce((s,c)=>s+c.cost,0);
   const discPct=getDiscount(count), discAmt=Math.round(subtotal*discPct/100);
@@ -380,10 +607,8 @@ function updatePriceDisplay(){
   const dr=document.getElementById('discountRow');
   if(discPct>0){dr.style.display='flex';document.getElementById('sumDiscount').textContent=`-$${discAmt} (${discPct}% off)`;}
   else dr.style.display='none';
-  document.getElementById('cashappPayBtn').textContent=`💚 Pay with CashApp — $${total}`;
-  document.getElementById('paypalPayBtn').textContent=`💳 Pay with PayPal — $${total}`;
-  document.getElementById('cashappPayBtn').href=`https://cash.app/$upandez/${total}`;
-  document.getElementById('paypalPayBtn').href=`https://paypal.me/upandez/${total}`;
+  document.getElementById('paypalPayBtn').textContent=`💳 Checkout with PayPal — $${total}`;
+  document.getElementById('paypalPayBtn').href=count>0?buildPayPalCheckoutUrl():'#';
   [1,2,3,4].forEach(n=>{
     const pill=document.getElementById(`pill${n}`);
     if(!pill) return;
@@ -488,19 +713,7 @@ function selectSession(el){
   renderCart(); updatePriceDisplay();
 }
 
-function selectPayment(el){
-  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('selected'));
-  el.classList.add('selected'); selectedPayment=el.dataset.method;
-  const cash=document.getElementById('cashappPayBtn'), pp=document.getElementById('paypalPayBtn');
-  const instr=document.getElementById('payInstructions');
-  if(selectedPayment==='CashApp'){
-    cash.classList.remove('hidden'); pp.classList.add('hidden');
-    instr.innerHTML=`Click <strong style="color:var(--white)">Pay with CashApp</strong> below to open Cash App and send to <strong style="color:var(--white)">$upandez</strong>. Include your student's name in the memo. Meet link sent after payment confirmed. ♟️`;
-  }else{
-    pp.classList.remove('hidden'); cash.classList.add('hidden');
-    instr.innerHTML=`Click <strong style="color:var(--white)">Pay with PayPal</strong> below to open PayPal and send to <strong style="color:var(--white)">@upandez</strong>. Include your student's name in the note. Meet link sent after payment confirmed. ♟️`;
-  }
-}
+
 
 function addToCart(){
   if(!selectedDate||!selectedSlot) return;
@@ -551,8 +764,7 @@ async function submitBooking(){
     if(error) throw error;
     document.getElementById('successMsg').textContent=`${cart.length} session${cart.length>1?'s':''} confirmed for ${studentName}. A confirmation will be sent to ${parentEmail}. Complete your payment below to receive your Google Meet link${cart.length>1?'s':''}.`;
     document.getElementById('successAmount').textContent=`$${total}`;
-    document.getElementById('successCashApp').href=`https://cash.app/$upandez/${total}`;
-    document.getElementById('successPayPal').href=`https://paypal.me/upandez/${total}`;
+    document.getElementById('successPayPal').href=buildPayPalCheckoutUrl();
     document.getElementById('successOverlay').classList.add('show');
   }catch(err){
     console.error(err);
@@ -573,6 +785,21 @@ function resetBooking(){
   document.getElementById('bookBtn').textContent='♟ Confirm Booking';
   renderCart(); updatePriceDisplay(); loadBookedSlots().then(renderCalendar);
 }
+
+
+document.getElementById('paypalPayBtn').addEventListener('click',(e)=>{
+  if(cart.length===0){
+    e.preventDefault();
+    showToast('Add at least one session to your cart before checkout.');
+  }
+});
+
+document.getElementById('successPayPal').addEventListener('click',(e)=>{
+  if(calcTotals().count===0){
+    e.preventDefault();
+    showToast('Your cart is empty.');
+  }
+});
 
 function showToast(msg){
   const t=document.getElementById('toast'); t.textContent=msg;
